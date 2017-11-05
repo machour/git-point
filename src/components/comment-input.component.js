@@ -1,7 +1,7 @@
 // @flow
 
 import React, { Component } from 'react';
-import { View, Text, Platform } from 'react-native';
+import { Text, Platform } from 'react-native';
 import { Icon } from 'react-native-elements';
 import styled from 'styled-components/native';
 
@@ -32,14 +32,11 @@ const InputText = styled.TextInput`
 
 const TextInputText = InputText.withComponent(Text);
 
-const PostButtonContainerCanPost = styled.TouchableOpacity`
+const PostButtonContainer = styled.TouchableOpacity`
   flex: 0.15;
   align-items: flex-end;
   justify-content: center;
 `;
-const PostButtonContainerCantPost = PostButtonContainerCanPost.withComponent(
-  View
-);
 
 const PostButtonIcon = styled(Icon).attrs({
   color: props => (props.disabled ? colors.grey : colors.primaryDark),
@@ -128,19 +125,19 @@ export class CommentInput extends Component {
           )}
 
           {userCanPost && (
-            <PostButtonContainerCanPost
+            <PostButtonContainer
               disabled={this.state.text === ''}
               onPress={() => this.handleSubmit(this.state.text)}
             >
               <PostButtonIcon name="send" disabled={this.state.text === ''} />
-            </PostButtonContainerCanPost>
+            </PostButtonContainer>
           )}
 
           {!userCanPost &&
             this.props.issueLocked && (
-              <PostButtonContainerCantPost>
+              <PostButtonContainer>
                 <Icon name="lock" type="octicon" color={colors.grey} />
-              </PostButtonContainerCantPost>
+              </PostButtonContainer>
             )}
         </Wrapper>
       </Container>
