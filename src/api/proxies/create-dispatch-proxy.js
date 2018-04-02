@@ -88,12 +88,20 @@ export const createDispatchProxy = Provider => {
                 });
               }
 
-              // Successful PUT or PATCH request, there will be no JSON, simply dispatch success
-              // TODO: We need a better test here
-              if (struct.response.status === 205) {
+              // Successful DELETE, delete the entity in the pagination, if any
+              if (struct.removedId && action.pagination) {
+                const paginationKey = getActionKeyFromArgs(
+                  struct.paginationParams
+                );
+
                 dispatch({
-                  id: actionKey,
-                  type: action.SUCCESS,
+                  pagination: {
+                    name: action.pagination.actionName,
+                    key: paginationKey,
+                    removedId: struct.removedId,
+                  },
+                  id: paginationKey,
+                  type: action.pagination.REMOVE,
                 });
 
                 return Promise.resolve();
@@ -101,10 +109,29 @@ export const createDispatchProxy = Provider => {
 
               return struct.response.json().then(json => {
                 // Treat the JSON & normalize it
-                const normalizedJson = normalize(
-                  struct.normalizrKey ? json[struct.normalizrKey] : json,
-                  struct.schema
-                );
+                const normalizedJson = struct.schema
+                  ? normalize(
+                      struct.normalizrKey ? json[struct.normalizrKey] : json,
+                      struct.schema
+                    )
+                  : { result: json };
+
+                // Successful POST, append the new entity in the pagination if any
+                if (struct.response.status === 201 && action.pagination) {
+                  const paginationKey = getActionKeyFromArgs(
+                    struct.paginationParams
+                  );
+
+                  dispatch({
+                    pagination: {
+                      name: action.pagination.actionName,
+                      key: paginationKey,
+                      ids: [normalizedJson.result],
+                    },
+                    id: paginationKey,
+                    type: action.pagination.APPEND,
+                  });
+                }
 
                 if (paginator) {
                   normalizedJson.pagination = {

@@ -88,6 +88,7 @@ class CommentListItemComponent extends Component {
     onEditPress: Function,
     onDeletePress: Function,
     locale: string,
+    working: boolean,
     navigation: Object,
     authUser: Object,
   };
@@ -123,7 +124,14 @@ class CommentListItemComponent extends Component {
   };
 
   render() {
-    const { comment, locale, navigation, authUser, onLinkPress } = this.props;
+    const {
+      comment,
+      locale,
+      navigation,
+      authUser,
+      onLinkPress,
+      updating,
+    } = this.props;
 
     const commentPresent = comment.body_html && comment.body_html !== '';
 
@@ -195,7 +203,7 @@ class CommentListItemComponent extends Component {
               <Icon
                 color={colors.grey}
                 size={20}
-                name={'ellipsis-h'}
+                name={updating ? 'hourglass-half' : 'ellipsis-h'}
                 type={'font-awesome'}
                 onPress={this.showMenu}
               />

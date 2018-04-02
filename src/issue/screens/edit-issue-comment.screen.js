@@ -14,6 +14,7 @@ import { ListItem } from 'react-native-elements';
 import { ViewContainer, SectionList, LoadingModal } from 'components';
 import { translate } from 'utils';
 import { colors, fonts, normalize } from 'config';
+import { RestClient } from 'api';
 import { editIssueBody, editIssueComment } from '../issue.action';
 
 const styles = StyleSheet.create({
@@ -39,14 +40,25 @@ const styles = StyleSheet.create({
   },
 });
 
-const mapStateToProps = state => ({
-  locale: state.auth.locale,
-  issue: state.issue.issue,
-  repository: state.repository.repository,
-  isEditingComment: state.issue.isEditingComment,
-});
+const mapStateToProps = state => {
+  const { auth: { locale }, pagination: { ISSUES_GET_COMMENTS } } = state;
 
-const mapDispatchToProps = dispatch =>
+  const issueCommentsPagination = ISSUES_GET_COMMENTS[issueFQN];
+  const issueComments = issueCommentsPagination.ids;
+
+  return {
+    locale,
+    issue: state.issue.issue,
+    repository: state.repository.repository,
+    isEditingComment: state.issue.isEditingComment,
+  };
+};
+
+const mapDispatchToProps = {
+  editIssueComment: RestClient.issues.editIssueComment,
+};
+
+/*dispatch =>
   bindActionCreators(
     {
       editIssueBody,
@@ -54,6 +66,7 @@ const mapDispatchToProps = dispatch =>
     },
     dispatch
   );
+*/
 
 class EditIssueComment extends Component {
   props: {
@@ -89,7 +102,7 @@ class EditIssueComment extends Component {
     const text = this.state.issueComment;
     const action = comment.repository_url
       ? this.props.editIssueBody(owner, repoName, issue.number, text)
-      : this.props.editIssueComment(comment.id, owner, repoName, text);
+      : this.props.editComment(comment.id, owner, repoName, text);
 
     action.then(() => navigation.goBack());
   };
@@ -111,7 +124,8 @@ class EditIssueComment extends Component {
               onContentSizeChange={event =>
                 this.setState({
                   issueCommentHeight: event.nativeEvent.contentSize.height,
-                })}
+                })
+              }
               placeholderTextColor={colors.grey}
               style={[
                 styles.textInput,

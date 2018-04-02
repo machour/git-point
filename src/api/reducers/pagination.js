@@ -6,8 +6,8 @@ import * as Actions from '../actions';
 // Creates a reducer managing pagination, given the action types to handle,
 // and a function telling how to extract the key from an action.
 const paginate = types => {
-  if (typeof types !== 'object' || Object.keys(types).length !== 4) {
-    throw new Error('Expected types to be an object of 4 props.');
+  if (typeof types !== 'object' || Object.keys(types).length !== 7) {
+    throw new Error('Expected types to be an object of 7 props.');
   }
 
   const updatePagination = (
@@ -31,6 +31,18 @@ const paginate = types => {
           nextPageUrl: undefined,
           pageCount: 0,
           ids: [],
+        };
+      case types.APPEND:
+        return {
+          ...state,
+          ids: union(state.ids, action.pagination.ids),
+        };
+      case types.REMOVE:
+        return {
+          ...state,
+          ids: state.ids.filter(
+            item => item.id !== action.pagination.removedId
+          ),
         };
       case types.SUCCESS:
         return {
@@ -56,6 +68,8 @@ const paginate = types => {
     switch (action.type) {
       case types.PENDING:
       case types.RESET:
+      case types.APPEND:
+      case types.REMOVE:
       case types.SUCCESS:
       case types.ERROR:
         const key = action.id;
@@ -82,4 +96,6 @@ export const pagination = combineReducers({
     Actions.ACTIVITY_GET_STARRED_REPOS_FOR_USER
   ),
   ORGS_GET_MEMBERS: paginate(Actions.ORGS_GET_MEMBERS),
+  ISSUES_GET_COMMENTS: paginate(Actions.ISSUES_GET_COMMENTS),
+  ISSUES_GET_EVENTS: paginate(Actions.ISSUES_GET_EVENTS),
 });

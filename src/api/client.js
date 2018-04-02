@@ -17,12 +17,25 @@ export class Client {
     POST: 'POST',
   };
 
+  Accept = {
+    DIFF: 'application/vnd.github.v3.diff+json',
+    FULL: 'application/vnd.github.v3.full+json',
+    HTML: 'application/vnd.github.v3.html+json',
+    JSON: 'application/vnd.github.v3+json',
+    MERCY_PREVIEW: 'application/vnd.github.mercy-preview+json',
+    RAW: 'application/vnd.github.v3.raw+json',
+  };
+
   authHeaders = {};
 
   call = async (
     url,
     params = {},
-    { method = this.Method.GET, body = {}, headers = {} } = {}
+    {
+      method = this.Method.GET,
+      body = {},
+      headers = { Accept: this.Accept.JSON },
+    } = {}
   ) => {
     let finalUrl;
 
@@ -55,7 +68,7 @@ export class Client {
     const withBody = [this.Method.PUT, this.Method.PATCH, this.Method.POST];
 
     if (withBody.indexOf(method) !== -1) {
-      parameters.body = JSON.stringify(body);
+      parameters.body = JSON.stringify({ body });
       if (method === this.Method.PUT) {
         parameters.headers['Content-Length'] = 0;
       }
@@ -162,6 +175,65 @@ export class Client {
         response,
         nextPageUrl: this.getNextPageUrl(response),
         schema: Schemas.USER_ARRAY,
+      }));
+    },
+  };
+
+  issues = {
+    get: async (repoId, number, params) => {
+      return this.call(`repos/${repoId}/issues/${number}`, params, {
+        headers: { Accept: this.Accept.HTML },
+      }).then(response => ({
+        response,
+        schema: Schemas.ISSUE,
+      }));
+    },
+    getComments: async (repoId, number, params) => {
+      return this.call(`repos/${repoId}/issues/${number}/comments`, params, {
+        headers: { Accept: this.Accept.HTML },
+      }).then(response => ({
+        response,
+        nextPageUrl: this.getNextPageUrl(response),
+        // schema: Schemas.ISSUE_COMMENT_ARRAY,
+      }));
+    },
+    getEvents: async (repoId, number, params) => {
+      return this.call(`repos/${repoId}/issues/${number}/events`, params).then(
+        response => ({
+          response,
+          nextPageUrl: this.getNextPageUrl(response),
+          //  schema: Schemas.ISSUE_EVENT_ARRAY,
+        })
+      );
+    },
+    createComment: async (repoId, number, body, params) => {
+      return this.call(`repos/${repoId}/issues/${number}/comments`, params, {
+        method: this.Method.POST,
+        headers: { Accept: this.Accept.FULL },
+        body,
+      }).then(response => ({
+        response,
+        paginationParams: [repoId, number],
+      }));
+    },
+    editComment: async (repoId, number, id, body, params) => {
+      return this.call(`repos/${repoId}/issues/${number}/comments`, params, {
+        method: this.Method.PATCH,
+        headers: { Accept: this.Accept.FULL },
+        body,
+      }).then(response => ({
+        response,
+        paginationParams: [repoId, number],
+        updatedId: id,
+      }));
+    },
+    deleteComment: async (repoId, number, id, params) => {
+      return this.call(`repos/${repoId}/issues/comments/${id}`, params, {
+        method: this.Method.DELETE,
+      }).then(response => ({
+        response,
+        paginationParams: [repoId, number],
+        removedId: id,
       }));
     },
   };
