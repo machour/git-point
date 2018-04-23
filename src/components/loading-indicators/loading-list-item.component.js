@@ -1,55 +1,60 @@
 import React, { Component } from 'react';
-import { StyleSheet, Animated, View } from 'react-native';
-
+import { Animated } from 'react-native';
+import styled from 'styled-components';
 import { colors } from 'config';
-import { loadingAnimation } from 'utils';
+import { infiniteAnimation } from 'utils';
 
-const styles = StyleSheet.create({
-  container: {
-    paddingTop: 10,
-    paddingRight: 10,
-    paddingBottom: 10,
-    borderBottomColor: '#ededed',
-    borderBottomWidth: 1,
-    backgroundColor: 'transparent',
-  },
-  wrapper: {
-    flexDirection: 'row',
-    marginLeft: 10,
-    height: 34,
-    alignItems: 'center',
-  },
-  textBar: {
-    paddingLeft: 34,
-    height: 7,
-    width: 150,
-    backgroundColor: colors.greyDark,
-  },
-});
+const Container = styled.View`
+  padding: 10px;
+  border-bottom-width: 1;
+  border-bottom-color: #ededed;
+  background-color: transparent;
+`;
+
+const Wrapper = styled.View`
+  flex-direction: row;
+  align-items: center;
+  height: 34;
+`;
+
+const TextBar = styled(Animated.View)`
+  height: 7;
+  width: 150;
+  background-color: ${colors.greyDark};
+`;
 
 export class LoadingListItem extends Component {
   constructor() {
     super();
+    this.fadeFrom = 0.3;
+    this.fadeTo = 0.6;
     this.state = {
-      fadeAnimValue: new Animated.Value(0),
+      fadeAnimValue: new Animated.Value(this.fadeTo),
     };
   }
 
   componentDidMount() {
-    loadingAnimation(this.state.fadeAnimValue).start();
+    this.runAnimation();
+  }
+
+  runAnimation() {
+    infiniteAnimation(
+      this.state.fadeAnimValue,
+      this.fadeFrom,
+      this.fadeTo,
+      () => {
+        this.runAnimation();
+      }
+    );
   }
 
   render() {
     return (
-      <View style={styles.container}>
-        <View style={styles.wrapper}>
-          <Animated.View style={{ opacity: this.state.fadeAnimValue }} />
-
-          <Animated.View
-            style={[styles.textBar, { opacity: this.state.fadeAnimValue }]}
-          />
-        </View>
-      </View>
+      <Container>
+        <Wrapper>
+          <TextBar style={{ opacity: this.state.fadeAnimValue }} />
+        </Wrapper>
+      </Container>
     );
   }
 }
