@@ -8,4 +8,11 @@ export const createActionSet = actionName => ({
 export const createPaginationActionSet = actionName => ({
   ...createActionSet(actionName),
   RESET: `${actionName}_RESET`,
+  APPEND: `${actionName}_APPEND`,
+  REMOVE: `${actionName}_REMOVE`,
+});
+
+export const createPaginationItemActionSet = (actionName, pagination) => ({
+  ...createActionSet(actionName),
+  pagination,
 });

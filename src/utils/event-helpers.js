@@ -2,15 +2,21 @@ import differenceInMilliseconds from 'date-fns/difference_in_milliseconds';
 
 export function formatEventsToRender(events = []) {
   return events
-    .filter(({ event }) => event !== 'mentioned' && event !== 'subscribed')
-    .filter(({ event }, index, list) => {
+    .filter(
+      ({ __typename }) =>
+        __typename !== 'MentionedEvent' && __typename !== 'SubscribedEvent'
+    )
+    .filter(({ __typename }, index, list) => {
       if (index === 0) {
         return true;
       }
 
       // Merge events are always followed by a closed event, but we don't
       // want to render them.
-      if (event === 'closed' && list[index - 1].event === 'merged') {
+      if (
+        __typename === 'ClosedEvent' &&
+        list[index - 1].__typename === 'MergedEvent'
+      ) {
         return false;
       }
 
@@ -18,34 +24,34 @@ export function formatEventsToRender(events = []) {
     })
     .reduce((results, event, index, list) => {
       // Label events are recorded individually, but we want to group them for display
-      const labelEvents = ['labeled', 'unlabeled'];
+      const labelEvents = ['LabeledEvent', 'UnlabeledEvent'];
       const prevEvent = index > 0 ? list[index - 1] : {};
 
       if (
         index > 0 &&
-        labelEvents.includes(event.event) &&
-        labelEvents.includes(prevEvent.event) &&
-        differenceInMilliseconds(event.created_at, prevEvent.created_at) <
+        labelEvents.includes(event.__typename) &&
+        labelEvents.includes(prevEvent.__typename) &&
+        differenceInMilliseconds(event.createdAt, prevEvent.createdAt) <
           10000 &&
         event.actor.login === prevEvent.actor.login
       ) {
         const labelGroup = results[results.length - 1];
 
-        if (event.event === 'labeled') {
+        if (event.__typename === 'LabeledEvent') {
           labelGroup.labeled.push(event);
         } else {
           labelGroup.unlabeled.push(event);
         }
-      } else if (labelEvents.includes(event.event)) {
+      } else if (labelEvents.includes(event.__typename)) {
         const labelGroup = {
-          event: 'label-group',
+          __typename: 'LabelGroupEvent',
           labeled: [],
           unlabeled: [],
-          created_at: event.created_at,
+          createdAt: event.createdAt,
           actor: event.actor,
         };
 
-        if (event.event === 'labeled') {
+        if (event.__typename === 'LabeledEvent') {
           labelGroup.labeled.push(event);
         } else {
           labelGroup.unlabeled.push(event);

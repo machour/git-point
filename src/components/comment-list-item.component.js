@@ -125,63 +125,63 @@ class CommentListItemComponent extends Component {
   render() {
     const { comment, locale, navigation, authUser, onLinkPress } = this.props;
 
-    const commentPresent = comment.body_html && comment.body_html !== '';
+    const commentPresent = comment.bodyHTML && comment.bodyHTML !== '';
 
     const isActionMenuEnabled =
-      comment.user && authUser.login === comment.user.login;
+      comment.author && authUser.login === comment.author.login;
 
     return (
       <Container>
         <Header>
-          {comment.user && (
+          {comment.author && (
             <AvatarContainer
               onPress={() =>
                 navigation.navigate(
-                  authUser.login === comment.user.login
+                  authUser.login === comment.author.login
                     ? 'AuthProfile'
                     : 'Profile',
                   {
-                    user: comment.user,
+                    user: comment.author,
                   }
                 )
               }
             >
               <Avatar
                 source={{
-                  uri: comment.user.avatar_url,
+                  uri: comment.author.avatarUrl,
                 }}
               />
             </AvatarContainer>
           )}
 
-          {comment.user && (
+          {comment.author && (
             <TitleSubtitleContainer>
               <LinkDescription
                 onPress={() =>
                   navigation.navigate(
-                    authUser.login === comment.user.login
+                    authUser.login === comment.author.login
                       ? 'AuthProfile'
                       : 'Profile',
                     {
-                      user: comment.user,
+                      user: comment.author,
                     }
                   )
                 }
               >
-                {comment.user.login}
+                {comment.author.login}
               </LinkDescription>
             </TitleSubtitleContainer>
           )}
 
           <DateContainer>
-            <DateLabel>{relativeTimeToNow(comment.created_at)}</DateLabel>
+            <DateLabel>{relativeTimeToNow(comment.createdAt)}</DateLabel>
           </DateContainer>
         </Header>
 
         <CommentContainer bottomPadding={!isActionMenuEnabled}>
           {commentPresent ? (
             <GithubHtmlView
-              source={comment.body_html}
+              source={comment.bodyHTML}
               onLinkPress={onLinkPress}
             />
           ) : (

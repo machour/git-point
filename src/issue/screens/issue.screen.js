@@ -1,7 +1,6 @@
 /* eslint-disable no-shadow */
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -20,7 +19,7 @@ import {
   CommentInput,
   IssueEventListItem,
 } from 'components';
-import { v3 } from 'api';
+import { RestClient, v3 } from 'api';
 import { t, formatEventsToRender, openURLInView } from 'utils';
 import { colors } from 'config';
 import { getRepository, getContributors } from 'repository';
@@ -32,6 +31,13 @@ import {
   getIssueEvents,
 } from '../issue.action';
 
+const getRepoAndIssueFromUrl = url => {
+  const re = /https:\/\/api.github.com\/repos\/(.*)\/issues\/(\d+)$/;
+  const matches = re.exec(url);
+
+  return { repoId: matches[1], issueNumber: matches[2] };
+};
+/*
 const mapStateToProps = state => ({
   locale: state.auth.locale,
   authUser: state.auth.user,
@@ -50,8 +56,36 @@ const mapStateToProps = state => ({
   isPostingComment: state.issue.isPostingComment,
   isPendingContributors: state.repository.isPendingContributors,
   isDeletingComment: state.issue.isDeletingComment,
-});
+});*/
 
+const mapStateToProps = (state, ownProps) => {
+  const {
+    entities: { issues, users, repos },
+    pagination: { ISSUES_GET_COMMENTS, ISSUES_GET_EVENTS, REPOS_GET_LABELS },
+  } = state;
+
+  const { repoId, issueNumber } = getRepoAndIssueFromUrl(
+    ownProps.navigation.state.params.issue.url
+  );
+
+  const repository = repos[repoId];
+
+  const issueFQN = `${repoId}-${issueNumber}`;
+  const issue = issues[issueFQN] || ownProps.navigation.state.params.issue;
+
+  return {
+    issue,
+    repoId,
+    repository,
+    issueNumber,
+  };
+};
+
+const mapDispatchToProps = {
+  getIssue: RestClient.graphql.getIssue,
+};
+
+/*
 const mapDispatchToProps = dispatch =>
   bindActionCreators(
     {
@@ -64,7 +98,7 @@ const mapDispatchToProps = dispatch =>
       getIssueEvents,
     },
     dispatch
-  );
+  );*/
 
 const compareCreatedAt = (a, b) => {
   if (a.created_at < b.created_at) {
@@ -175,16 +209,18 @@ class Issue extends Component {
     }
   };
 
-  onRepositoryPress = url => {
+  onRepositoryPress = repoId => {
     const { navigation } = this.props;
 
     navigation.navigate('Repository', {
-      repositoryUrl: url,
+      repoId,
     });
   };
 
   getIssueInformation = () => {
     const {
+      repoId,
+      issueNumber,
       navigation,
       repository,
       getIssueComments,
@@ -192,13 +228,15 @@ class Issue extends Component {
       getContributors,
       getIssueFromUrl,
       getIssueEvents,
+      getIssue,
     } = this.props;
 
     const params = navigation.state.params;
     const issueURL = params.issueURL || params.issue.url;
-    const issueRepository = issueURL
-      .replace(`${v3.root}/repos/`, '')
-      .replace(/([^/]+\/[^/]+)\/issues\/\d+$/, '$1');
+
+    getIssue(repoId, issueNumber);
+
+    return Promise.resolve(true);
 
     Promise.all([
       getIssueFromUrl(issueURL),
@@ -317,33 +355,85 @@ class Issue extends Component {
   renderItem = ({ item }) => {
     const { repository, locale, navigation } = this.props;
 
-    if (item.header) {
-      return this.renderHeader();
+    if (!item.__typename) {
+      return item;
     }
 
-    if (item.event) {
+    if (item.__typename === 'IssueComment') {
       return (
-        <IssueEventListItem
-          repository={repository}
-          event={item}
+        <CommentListItem
+          comment={item}
+          onLinkPress={node => this.onLinkPress(node)}
+          onDeletePress={this.deleteComment}
+          onEditPress={this.editComment}
+          locale={locale}
           navigation={navigation}
         />
       );
     }
 
     return (
-      <CommentListItem
-        comment={item}
-        onLinkPress={node => this.onLinkPress(node)}
-        onDeletePress={this.deleteComment}
-        onEditPress={this.editComment}
-        locale={locale}
+      <IssueEventListItem
+        repository={repository}
+        event={item}
         navigation={navigation}
       />
     );
   };
 
   render() {
+    const { issue, locale, navigation, repoId } = this.props;
+
+    const isLoading = !issue;
+
+    return (
+      <ViewContainer>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={'padding'}
+          keyboardVerticalOffset={Platform.select({
+            ios: 65,
+            android: -200,
+          })}
+        >
+          <FlatList
+            ref={ref => {
+              this.commentsList = ref;
+            }}
+            refreshing={isLoading}
+            onRefresh={this.getIssueInformation}
+            contentContainerStyle={{ flexGrow: 1 }}
+            removeClippedSubviews={false}
+            data={[
+              <IssueDescription
+                issue={issue}
+                repoId={repoId}
+                onRepositoryPress={repoId => this.onRepositoryPress(repoId)}
+                onLinkPress={node => this.onLinkPress(node)}
+                locale={locale}
+                navigation={navigation}
+              />,
+              <CommentListItem
+                comment={issue}
+                onLinkPress={node => this.onLinkPress(node)}
+                onDeletePress={this.deleteComment}
+                onEditPress={this.editComment}
+                locale={locale}
+                navigation={navigation}
+              />,
+              ...(issue && issue.timeline
+                ? formatEventsToRender(issue.timeline.nodes)
+                : []),
+            ]}
+            keyExtractor={this.keyExtractor}
+            renderItem={this.renderItem}
+          />
+        </KeyboardAvoidingView>
+      </ViewContainer>
+    );
+  }
+
+  oldrender() {
     const {
       issue,
       comments,
@@ -356,6 +446,15 @@ class Issue extends Component {
       locale,
       navigation,
     } = this.props;
+
+    console.log(this.props);
+
+    const a = true;
+    return (
+      <ViewContainer>
+        {a && <LoadingContainer animating={a} center />}
+      </ViewContainer>
+    );
 
     const isLoadingData = !!(
       isPendingComments ||

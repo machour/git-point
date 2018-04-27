@@ -83,6 +83,80 @@ const MergeButtonContainer = styled.View`
 export class IssueDescription extends Component {
   props: {
     issue: Object,
+    repoId: String,
+    onRepositoryPress: Function,
+    locale: string,
+    navigation: Object,
+  };
+
+  renderLabelButtons = labels => {
+    return labels
+      .slice(0, 3)
+      .map(label => <InlineLabel key={label.name} label={label} />);
+  };
+
+  render() {
+    const { issue, repoId, onRepositoryPress, locale, navigation } = this.props;
+
+    return (
+      <ContainerBorderBottom>
+        {repoId && (
+          <RepoLink
+            title={repoId}
+            leftIcon={{
+              name: 'repo',
+              size: 17,
+              color: colors.grey,
+              type: 'octicon',
+            }}
+            onPress={() => onRepositoryPress(repoId)}
+            hideChevron
+          />
+        )}
+
+        <HeaderContainer>
+          <IssueTitle
+            title={issue.title}
+            subtitle={relativeTimeToNow(issue.createdAt)}
+            leftIcon={{
+              name: 'issue-opened',
+              size: 36,
+              color: issue.state === 'open' ? colors.green : colors.red,
+              type: 'octicon',
+            }}
+            hideChevron
+          />
+
+          <StateBadge issue={issue} locale={locale} />
+        </HeaderContainer>
+
+        {issue.labels &&
+          issue.labels.nodes &&
+          issue.labels.nodes.length > 0 && (
+            <LabelButtonGroup>
+              {this.renderLabelButtons(issue.labels.nodes)}
+            </LabelButtonGroup>
+          )}
+        {issue.assignees &&
+          issue.assignees.length > 0 && (
+            <AssigneesSection>
+              <MembersList
+                title={t('Assignees', locale)}
+                members={issue.assignees}
+                containerStyle={{ marginTop: 0, paddingTop: 0, paddingLeft: 0 }}
+                smallTitle
+                navigation={navigation}
+              />
+            </AssigneesSection>
+          )}
+      </ContainerBorderBottom>
+    );
+  }
+}
+
+export class OldIssueDescription extends Component {
+  props: {
+    issue: Object,
     diff: string,
     isMergeable: boolean,
     isMerged: boolean,

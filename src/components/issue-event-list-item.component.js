@@ -5,7 +5,7 @@ import { colors, fonts, normalize } from 'config';
 import { InlineLabel } from 'components';
 import styled from 'styled-components';
 
-import { relativeTimeToNow } from 'utils';
+import { relativeTimeToNow, t } from 'utils';
 
 const marginLeftForIconName = name => {
   switch (name) {
@@ -88,222 +88,367 @@ export class IssueEventListItem extends Component {
     repository: Object,
     event: Object,
     navigation: Object,
+    locale: String,
   };
 
   onPressUser = user => {
     this.props.navigation.navigate('Profile', { user });
   };
 
+  handleReviewRequested(event, repository) {
+    // FIXME: repository should not exist
+    const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+    const reviewer =
+      event.requestedReviewer.__typename === 'User' ? (
+        <ActorLink actor={event.requestedReviewer} onPress={this.onPressUser} />
+      ) : (
+        <BoldText>
+          {repository.owner.login}/{event.requestedReviewer.name}
+        </BoldText>
+      );
+
+    return (
+      <Event
+        iconName="eye"
+        text={
+          <Text>
+            {t('{actor} requested review from {reviewer}', this.props.locale, {
+              actor,
+              reviewer,
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleLabeledEvent(event) {
+    return (
+      <Event
+        iconName="tag"
+        text={
+          <EventTextContainer>
+            {t('{actor} added {label}', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+              label: <InlineLabel label={event.label} />,
+            })}
+          </EventTextContainer>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleUnlabeledEvent(event) {
+    return (
+      <Event
+        iconName="tag"
+        text={
+          <EventTextContainer>
+            {t('{actor} removed {label}', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+              label: <InlineLabel label={event.label} />,
+            })}
+          </EventTextContainer>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleAssignedEvent(event) {
+    return (
+      <Event
+        iconName="person"
+        text={
+          <Text>
+            {t('{actor} assigned {assignee}', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+              assignee: (
+                <ActorLink actor={event.assignee} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleUnassignedEvent(event) {
+    return (
+      <Event
+        iconName="person"
+        text={
+          <Text>
+            {t('{actor} unassigned {assignee}', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+              assignee: (
+                <ActorLink actor={event.assignee} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleClosedEvent(event) {
+    return (
+      <Event
+        iconName="circle-slash"
+        iconColor={colors.white}
+        iconBackgroundColor={colors.darkerRed}
+        text={
+          <Text>
+            {t('{actor} closed this', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleReopenedEvent(event) {
+    return (
+      <Event
+        iconName="primitive-dot"
+        iconColor={colors.white}
+        iconBackgroundColor={colors.green}
+        text={
+          <Text>
+            {t('{actor} reopened this', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleRenamedTitleEvent(event) {
+    return (
+      <Event
+        iconName="pencil"
+        text={
+          <Text>
+            {t(
+              '{actor} changed the title from {previousTitle} to {currentTitle}',
+              this.props.locale,
+              {
+                actor: (
+                  <ActorLink actor={event.actor} onPress={this.onPressUser} />
+                ),
+                previousTitle: <BoldText>{event.previousTitle}</BoldText>,
+                currentTitle: <BoldText>{event.currentTitle}</BoldText>,
+              }
+            )}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleDemilestonedEvent(event) {
+    return (
+      <Event
+        iconName="milestone"
+        text={
+          <Text>
+            {t(
+              '{actor} removed this from the {milestone} milestone',
+              this.props.locale,
+              {
+                actor: (
+                  <ActorLink actor={event.actor} onPress={this.onPressUser} />
+                ),
+                milestone: <BoldText>{event.milestoneTitle}</BoldText>,
+              }
+            )}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleMilestonedEvent(event) {
+    return (
+      <Event
+        iconName="milestone"
+        text={
+          <Text>
+            {t(
+              '{actor} added this to the {milestone} milestone',
+              this.props.locale,
+              {
+                actor: (
+                  <ActorLink actor={event.actor} onPress={this.onPressUser} />
+                ),
+                milestone: <BoldText>{event.milestoneTitle}</BoldText>,
+              }
+            )}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleUnlockedEvent(event) {
+    return (
+      <Event
+        iconName="key"
+        iconColor="white"
+        iconBackgroundColor="black"
+        text={
+          <Text>
+            {t('{actor} unlocked this conversation', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleLockedEvent(event) {
+    const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+
+    if (event.lockReason) {
+      return (
+        <Event
+          iconName="lock"
+          iconColor="white"
+          iconBackgroundColor="black"
+          text={
+            <Text>
+              {t(
+                '{actor} locked this conversation as {reason}',
+                this.props.locale,
+                {
+                  actor,
+                  reason: event.lockReason,
+                }
+              )}
+            </Text>
+          }
+          createdAt={event.createdAt}
+        />
+      );
+    }
+
+    return (
+      <Event
+        iconName="lock"
+        iconColor="white"
+        iconBackgroundColor="black"
+        text={
+          <Text>
+            {t('{actor} locked this conversation', this.props.locale, {
+              actor,
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleMergedEvent(event) {
+    return (
+      <Event
+        iconName="git-merge"
+        iconColor={colors.white}
+        iconBackgroundColor={colors.purple}
+        text={
+          <Text>
+            {t('{actor} merged {commit}', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+              commit: <BoldText>{event.commit_id.slice(0, 7)}</BoldText>,
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleHeadRefDeletedEvent(event) {
+    return (
+      <Event
+        iconName="git-branch"
+        iconColor={colors.white}
+        iconBackgroundColor={colors.greyBlue}
+        text={
+          <Text>
+            {t('{actor} deleted this branch', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  handleHeadRefRestoredEvent(event) {
+    return (
+      <Event
+        iconName="git-branch"
+        text={
+          <Text>
+            {t('{actor} restored this branch', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
+  // This is a fake event created by formatEventsToRender()
+  handleLabelGroupEvent(event) {
+    return <LabelGroup group={event} onPressUser={this.onPressUser} />;
+  }
+
   render() {
     const { repository, event } = this.props;
+    const handler = `handle${event.__typename}`;
 
-    switch (event.event) {
-      case 'review_requested':
-        return (
-          <Event
-            iconName="eye"
-            text={
-              <Text>
-                <ActorLink
-                  actor={event.review_requester}
-                  onPress={this.onPressUser}
-                />{' '}
-                requested review from{' '}
-                {!!event.requested_reviewer && (
-                  <ActorLink
-                    actor={event.requested_reviewer}
-                    onPress={this.onPressUser}
-                  />
-                )}
-                {!!event.requested_team && (
-                  <BoldText>
-                    {repository.owner.login}/{event.requested_team.name}
-                  </BoldText>
-                )}
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      case 'labeled':
-      case 'unlabeled':
-        return (
-          <Event
-            iconName="tag"
-            text={
-              <EventTextContainer>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-                <Text>
-                  {' '}
-                  {event.event === 'unlabeled' ? 'removed' : 'added'}{' '}
-                </Text>
-                <InlineLabel label={event.label} />
-              </EventTextContainer>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      case 'label-group':
-        return <LabelGroup group={event} onPressUser={this.onPressUser} />;
-      case 'closed':
-        return (
-          <Event
-            iconName="circle-slash"
-            iconColor={colors.white}
-            iconBackgroundColor={colors.darkerRed}
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                closed this
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      case 'reopened':
-        return (
-          <Event
-            iconName="primitive-dot"
-            iconBackgroundColor={colors.green}
-            iconColor={colors.white}
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                reopened this
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      case 'merged':
-        return (
-          <Event
-            iconName="git-merge"
-            iconColor={colors.white}
-            iconBackgroundColor={colors.purple}
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                merged <Bold>{event.commit_id.slice(0, 7)}</Bold>
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      // case 'referenced':
-      case 'renamed':
-        return (
-          <Event
-            iconName="pencil"
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                changed the title from <Bold>{event.rename.from.trim()}</Bold>{' '}
-                to <Bold>{event.rename.to.trim()}</Bold>
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      case 'assigned':
-      case 'unassigned':
-        return (
-          <Event
-            iconName="person"
-            text={
-              <Text>
-                <ActorLink actor={event.assigner} onPress={this.onPressUser} />{' '}
-                {event.event}{' '}
-                <ActorLink actor={event.assignee} onPress={this.onPressUser} />
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      // case 'review_dismissed':
-      // case 'review_request_removed':
-      case 'milestoned':
-      case 'demilestoned': {
-        const milestoneAction =
-          event.event === 'demilestoned'
-            ? 'removed this from'
-            : 'added this to';
-
-        return (
-          <Event
-            iconName="milestone"
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                {milestoneAction} the <Bold>{event.milestone.title}</Bold>{' '}
-                milestone
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      }
-      case 'locked':
-      case 'unlocked':
-        return (
-          <Event
-            iconName={event.event === 'unlocked' ? 'key' : 'lock'}
-            iconColor="white"
-            iconBackgroundColor="black"
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                {event.event} this conversation
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      case 'head_ref_deleted':
-      case 'head_ref_restored': {
-        const isRestored = event.event === 'head_ref_restored';
-        const headRefAction = isRestored ? 'restored' : 'deleted';
-
-        return (
-          <Event
-            iconName="git-branch"
-            iconColor={isRestored ? undefined : colors.white}
-            iconBackgroundColor={isRestored ? undefined : colors.greyBlue}
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                {headRefAction} this branch
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      }
-      case 'marked_as_duplicate':
-      case 'unmarked_as_duplicate':
-        return (
-          <Event
-            iconName="bookmark"
-            iconColor={colors.white}
-            iconBackgroundColor={colors.greyBlue}
-            text={
-              <Text>
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />{' '}
-                marked this as{' '}
-                {event.event === 'unmarked_as_duplicate' ? 'not ' : ''}a
-                duplicate
-              </Text>
-            }
-            createdAt={event.created_at}
-          />
-        );
-      // case 'added_to_project':
-      // case 'moved_columns_in_project':
-      // case 'removed_from_project':
-      // case 'converted_note_to_issue':
-      default:
-        return null;
+    if (typeof this[handler] === 'function') {
+      return this[handler](event, repository);
     }
+
+    return null;
   }
 }
 
@@ -352,12 +497,7 @@ class LabelGroup extends Component {
   };
 
   render() {
-    const {
-      actor,
-      labeled,
-      unlabeled,
-      created_at: createdAt,
-    } = this.props.group;
+    const { actor, labeled, unlabeled, createdAt } = this.props.group;
 
     const toInlineLabel = (type, { label }, index) => (
       <InlineLabel key={type + index} label={label} />
@@ -413,15 +553,5 @@ class ActorLink extends Component {
         {actor.login}
       </BoldText>
     );
-  }
-}
-
-class Bold extends Component {
-  props: {
-    children: Object | String,
-  };
-
-  render() {
-    return <BoldText>{this.props.children}</BoldText>;
   }
 }

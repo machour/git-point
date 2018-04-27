@@ -6,7 +6,7 @@ import { version } from 'package.json';
 import { Platform } from 'react-native';
 
 import Schemas from './schemas';
-import { repoQuery } from './queries';
+import { repoQuery, issueQuery } from './queries';
 
 type SpecialParameters = {
   forceRefresh?: boolean,
@@ -248,6 +248,20 @@ export class Client {
         schema: Schemas.GQL_REPO,
       });
     },
+    getIssue: (
+      repoId: string,
+      number: number,
+      params: SpecialParameters = {}
+    ) => {
+      const [owner, name] = repoId.split('/');
+
+      return this.query({
+        params,
+        query: issueQuery,
+        variables: { owner, name, number: parseInt(number, 10) },
+        schema: Schemas.GQL_ISSUE,
+      });
+    },
   };
 
   /**
@@ -352,6 +366,143 @@ export class Client {
         },
       }),
   };
+
+  issues = {
+    get: (repoId: string, number: number, params: SpecialParameters = {}) =>
+      this.get({
+        endpoint: `repos/${repoId}/issues/${number}`,
+        params,
+        schema: Schemas.ISSUE,
+        fetchParameters: {
+          headers: {
+            Accept: this.Accept.FULL,
+          },
+        },
+      }),
+
+    edit: (
+      repoId: string,
+      number: string,
+      data: Object,
+      params: SpecialParameters = {}
+    ) =>
+      this.update({
+        endpoint: `repos/${repoId}/issues/${number}`,
+        params,
+        schema: Schemas.ISSUE,
+        fetchParameters: {
+          headers: {
+            Accept: this.Accept.FULL,
+          },
+          body: data,
+        },
+      }),
+
+    lock: (repoId: string, number: string, params: SpecialParameters = {}) =>
+      this.put({
+        endpoint: `repos/${repoId}/issues/${number}/lock`,
+        params,
+        schema: Schemas.ISSUE,
+        changeEntity: {
+          type: 'issues',
+          id: `${repoId}-${number}`,
+          changes: {
+            locked: true,
+          },
+        },
+      }),
+
+    unlock: (repoId: string, number: string, params: SpecialParameters = {}) =>
+      this.delete({
+        endpoint: `repos/${repoId}/issues/${number}/lock`,
+        params,
+        schema: Schemas.ISSUE,
+        changeEntity: {
+          type: 'issues',
+          id: `${repoId}-${number}`,
+          changes: {
+            locked: false,
+          },
+        },
+      }),
+
+    getComments: (
+      repoId: string,
+      number: number,
+      params: SpecialParameters = {}
+    ) =>
+      this.list({
+        endpoint: `repos/${repoId}/issues/${number}/comments`,
+        params,
+        schema: Schemas.ISSUE_COMMENT_ARRAY,
+        paginationArgs: [repoId, number],
+        fetchParameters: {
+          headers: { Accept: this.Accept.FULL },
+        },
+      }),
+
+    getEvents: (
+      repoId: string,
+      number: number,
+      params: SpecialParameters = {}
+    ) =>
+      this.list({
+        endpoint: `repos/${repoId}/issues/${number}/events`,
+        params,
+        schema: Schemas.ISSUE_EVENT_ARRAY,
+        paginationArgs: [repoId, number],
+      }),
+
+    createComment: (
+      repoId: string,
+      number: number,
+      body: string,
+      params: SpecialParameters = {}
+    ) =>
+      this.create({
+        endpoint: `repos/${repoId}/issues/${number}/comments`,
+        params,
+        schema: Schemas.ISSUE_COMMENT,
+        paginationArgs: [repoId, number],
+        fetchParameters: {
+          body: { body },
+          headers: { Accept: this.Accept.FULL },
+        },
+      }),
+
+    editComment: (
+      repoId: string,
+      number: number,
+      id: number,
+      body: string,
+      params: SpecialParameters = {}
+    ) =>
+      this.update({
+        endpoint: `repos/${repoId}/issues/comments/${id}`,
+        params,
+        schema: Schemas.ISSUE_COMMENT,
+        fetchParameters: {
+          headers: { Accept: this.Accept.FULL },
+          body: { body },
+        },
+        paginationArgs: [repoId, number],
+      }),
+
+    deleteComment: (
+      repoId: string,
+      number: number,
+      id: number,
+      params: SpecialParameters = {}
+    ) =>
+      this.delete({
+        endpoint: `repos/${repoId}/issues/comments/${id}`,
+        params,
+        schema: Schemas.ISSUE_COMMENT,
+        paginationArgs: [repoId, number],
+        entityId: id,
+      }),
+  };
+
   search = {
     repos: (q: string, params: SpecialParameters = {}) =>
       this.list({
