@@ -34,7 +34,7 @@ const paginate = types => {
       case types.APPEND:
         return {
           ...state,
-          ids: union(state.ids, action.pagination.edges),
+          ids: union(state.ids, action.pagination.ids),
         };
       case types.REMOVE:
         return {

@@ -4,6 +4,7 @@ import { orgSchema } from './orgs';
 import { userSchema } from './users';
 import { gqlRepoSchema } from './gql-repos';
 import { gqlIssueSchema } from './gql-issues';
+import { issueCommentSchema } from './issue-comments';
 
 export default {
   EVENT: eventSchema,
@@ -16,4 +17,5 @@ export default {
   ORG_ARRAY: [orgSchema],
   GQL_REPO: gqlRepoSchema,
   GQL_ISSUE: gqlIssueSchema,
+  ISSUE_COMMENT: issueCommentSchema,
 };

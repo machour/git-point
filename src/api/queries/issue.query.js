@@ -59,12 +59,13 @@ query ($owner: String!, $name: String!, $number: Int!) {
           node {
             __typename
             ... on IssueComment {
-              id
+              id: databaseId
               createdAt
               author {
                 login
                 avatarUrl
               }
+              body
               bodyHTML
               reactionGroups {
                 content

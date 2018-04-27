@@ -555,10 +555,8 @@ class Events extends Component {
 
   navigateToIssue = userEvent => {
     this.props.navigation.navigate('Issue', {
-      issue:
-        userEvent.payload.issue ||
-        this.formatPullRequestObject(userEvent.payload.pull_request),
-      isPR: !!userEvent.payload.pull_request,
+      issueNumber: userEvent.payload.issue.number,
+      repoId: userEvent.repo.name.toLowerCase(),
     });
   };
 

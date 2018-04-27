@@ -60,7 +60,7 @@ export class Client {
 
   Accept = {
     DIFF: 'application/vnd.github.v3.diff+json',
-    FULL: 'application/vnd.github.v3.full+json',
+    FULL: 'application/vnd.github.jean-grey-preview.full+json',
     HTML: 'application/vnd.github.v3.html+json',
     JSON: 'application/vnd.github.v3+json',
     MERCY_PREVIEW: 'application/vnd.github.mercy-preview+json',
@@ -145,6 +145,16 @@ export class Client {
     ...config,
     fetchParameters: merge(
       { method: this.Method.POST, headers: { Accept: this.Accept.JSON } },
+      fetchParameters
+    ),
+  });
+
+  update = ({ fetchParameters, ...config }: CallParameters): CallType => ({
+    type: 'update',
+    params: {},
+    ...config,
+    fetchParameters: merge(
+      { method: this.Method.PATCH, headers: { Accept: this.Accept.JSON } },
       fetchParameters
     ),
   });
@@ -438,33 +448,6 @@ export class Client {
         },
       }),
 
-    getComments: (
-      repoId: string,
-      number: number,
-      params: SpecialParameters = {}
-    ) =>
-      this.list({
-        endpoint: `repos/${repoId}/issues/${number}/comments`,
-        params,
-        schema: Schemas.ISSUE_COMMENT_ARRAY,
-        paginationArgs: [repoId, number],
-        fetchParameters: {
-          headers: { Accept: this.Accept.FULL },
-        },
-      }),
-
-    getEvents: (
-      repoId: string,
-      number: number,
-      params: SpecialParameters = {}
-    ) =>
-      this.list({
-        endpoint: `repos/${repoId}/issues/${number}/events`,
-        params,
-        schema: Schemas.ISSUE_EVENT_ARRAY,
-        paginationArgs: [repoId, number],
-      }),
-
     createComment: (
       repoId: string,
       number: number,
@@ -475,6 +458,7 @@ export class Client {
         endpoint: `repos/${repoId}/issues/${number}/comments`,
         params,
         schema: Schemas.ISSUE_COMMENT,
+        paginationType: 'graphql',
         paginationArgs: [repoId, number],
         fetchParameters: {
           body: { body },
@@ -498,6 +482,10 @@ export class Client {
           body: { body },
         },
         paginationArgs: [repoId, number],
+        updater: issueTimelineItem => ({
+          ...issueTimelineItem,
+          bodyHTML: issueTimelineItem.body_HTML,
+        }),
       }),
 
     deleteComment: (

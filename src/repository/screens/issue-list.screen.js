@@ -98,6 +98,7 @@ const styles = StyleSheet.create({
 class IssueList extends Component {
   static navigationOptions = ({ navigation }) => {
     const { state, navigate } = navigation;
+    const repoId = state.params.repoId;
 
     return {
       headerRight: (
@@ -110,6 +111,7 @@ class IssueList extends Component {
           onPress={() =>
             navigate('NewIssue', {
               title: t('New Issue', state.params.locale),
+              repoId,
             })
           }
         />
@@ -118,6 +120,7 @@ class IssueList extends Component {
   };
 
   props: {
+    repoId: string,
     locale: string,
     repository: Object,
     searchedOpenIssues: Array,

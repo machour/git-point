@@ -19,7 +19,7 @@ import {
   CommentInput,
   IssueEventListItem,
 } from 'components';
-import { RestClient, v3 } from 'api';
+import { RestClient } from 'api';
 import { t, formatEventsToRender, openURLInView } from 'utils';
 import { colors } from 'config';
 
@@ -78,14 +78,21 @@ const mapStateToProps = (state, ownProps) => {
     ids: [],
     pageInfo: {},
   };
-
-  console.log('tt', timelinePagination);
   const timeline = timelinePagination.ids.map(id => issueTimelineItems[id]);
+
+  const labelsPagination = GRAPHQL_ISSUES_LABELS_PAGINATION[issueFQN] || {
+    isFetching: true,
+    ids: [],
+    pageInfo: {},
+  };
+  const labels = labelsPagination.ids.map(item => item.node);
 
   return {
     issue,
     timeline,
     timelinePagination,
+    labels,
+    labelsPagination,
     repoId,
     repository,
     issueNumber,
@@ -94,6 +101,8 @@ const mapStateToProps = (state, ownProps) => {
 
 const mapDispatchToProps = {
   getIssue: RestClient.graphql.getIssue,
+  postIssueComment: RestClient.issues.createComment,
+  deleteIssueComment: RestClient.issues.deleteComment,
 };
 
 const compareCreatedAt = (a, b) => {
@@ -147,18 +156,22 @@ class Issue extends Component {
   props: {
     repoId: string,
     issueNumber: number,
-    getIssue: Function,
     locale: string,
     navigation: Object,
     issue: Object,
     timeline: Array,
     timelinePagination: Object,
+    labels: Array,
+    labelsPagination: Object,
+
+    getIssue: Function,
+    postIssueComment: Function,
+    deleteIssueComment: Function,
+
     // OLD
     getRepository: Function,
     getContributors: Function,
-    postIssueComment: Function,
     getIssueFromUrl: Function,
-    deleteIssueComment: Function,
     diff: string,
     pr: Object,
     isMerged: boolean,
@@ -202,7 +215,6 @@ class Issue extends Component {
       const re = /https:\/\/github.com\/(.*)\/issues\/(\d+)$/;
       const matches = re.exec(node.attribs.href);
 
-      console.log('node', node);
       navigation.navigate('Issue', {
         repoId: matches[1],
         issueNumber: matches[2],
@@ -249,34 +261,28 @@ class Issue extends Component {
   };
 
   postComment = body => {
-    const { issue, repository } = this.props;
+    const { issueNumber, repoId } = this.props;
 
-    const repoName = repository.name;
-    const owner = repository.owner.login;
-    const issueNum = issue.number;
-
-    this.props.postIssueComment(body, owner, repoName, issueNum).then(() => {
+    this.props.postIssueComment(repoId, issueNumber, body).then(() => {
       this.commentsList.scrollToEnd();
     });
     Keyboard.dismiss();
   };
 
   deleteComment = comment => {
-    const { repository } = this.props;
-    const repoName = repository.name;
-    const owner = repository.owner.login;
+    const { repoId, issueNumber } = this.props;
 
-    this.props.deleteIssueComment(comment.id, owner, repoName);
+    this.props.deleteIssueComment(repoId, issueNumber, comment.id);
   };
 
   editComment = comment => {
     const { state, navigate } = this.props.navigation;
-    const { repository } = this.props;
+    const { repoId } = this.props;
 
     navigate('EditIssueComment', {
       title: t('Edit Comment', state.params.locale),
+      repoId,
       comment,
-      repository,
     });
   };
 
@@ -288,6 +294,7 @@ class Issue extends Component {
     const {
       issue,
       pr,
+      labels,
       diff,
       isMerged,
       isPendingDiff,
@@ -299,6 +306,7 @@ class Issue extends Component {
     return (
       <IssueDescription
         issue={issue}
+        labels={labels}
         diff={diff}
         isMergeable={pr.mergeable}
         isMerged={isMerged}
@@ -345,6 +353,7 @@ class Issue extends Component {
   render() {
     const {
       issue,
+      labels,
       timeline,
       timelinePagination,
       issueNumber,
@@ -355,14 +364,10 @@ class Issue extends Component {
 
     const isLoading = !issue;
 
-    console.log('Issue', issue);
-
     const timelineCursor = timelinePagination
       ? timelinePagination.pageInfo.endCursor
       : '';
-    //      issue && issue.timeline ? issue.timeline.pageInfo.endCursor : '';
-
-    console.log('titmeline', timeline);
+    const issuesActions = [t('Open in Browser', locale)];
 
     return (
       <ViewContainer>
@@ -390,6 +395,7 @@ class Issue extends Component {
               data={[
                 <IssueDescription
                   issue={issue}
+                  labels={labels}
                   repoId={repoId}
                   onRepositoryPress={repoId => this.onRepositoryPress(repoId)}
                   onLinkPress={node => this.onLinkPress(node)}
@@ -420,6 +426,16 @@ class Issue extends Component {
             onSubmit={this.postComment}
           />
         </KeyboardAvoidingView>
+
+        <ActionSheet
+          ref={o => {
+            this.ActionSheet = o;
+          }}
+          title={t('Issue Actions', locale)}
+          options={[...issuesActions, t('Cancel', locale)]}
+          cancelButtonIndex={1}
+          onPress={this.handleActionSheetPress}
+        />
       </ViewContainer>
     );
   }

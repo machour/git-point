@@ -1,7 +1,6 @@
 // @flow
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
-import { bindActionCreators } from 'redux';
 import {
   ScrollView,
   StyleSheet,
@@ -13,8 +12,8 @@ import { ListItem } from 'react-native-elements';
 
 import { ViewContainer, SectionList, LoadingModal } from 'components';
 import { t } from 'utils';
+import { RestClient } from 'api';
 import { colors, fonts, normalize } from 'config';
-import { editIssueBody, editIssueComment } from '../issue.action';
 
 const styles = StyleSheet.create({
   textInput: {
@@ -46,24 +45,20 @@ const mapStateToProps = state => ({
   isEditingComment: state.issue.isEditingComment,
 });
 
-const mapDispatchToProps = dispatch =>
-  bindActionCreators(
-    {
-      editIssueBody,
-      editIssueComment,
-    },
-    dispatch
-  );
+const mapDispatchToProps = {
+  editIssueBody: RestClient.issues.edit,
+  editIssueComment: RestClient.issues.editComment,
+};
 
 class EditIssueComment extends Component {
   props: {
-    editIssueBody: Function,
-    editIssueComment: Function,
+    isIssueDescription: boolean,
     locale: string,
-    repository: Object,
     navigation: Object,
     issue: Object,
     isEditingComment: boolean,
+    editIssueBody: Function,
+    editIssueComment: Function,
   };
 
   state: {
@@ -81,15 +76,16 @@ class EditIssueComment extends Component {
   }
 
   editComment = () => {
-    const { issue, navigation } = this.props;
-    const { repository, comment } = this.props.navigation.state.params;
+    const { issue, isIssueDescription, navigation } = this.props;
+    const commentId = navigation.state.params.comment.id;
+    const repoId = navigation.state.params.repoId;
 
-    const repoName = repository.name;
-    const owner = repository.owner.login;
+    console.log('repoId is ' + repoId);
+
     const text = this.state.issueComment;
-    const action = comment.repository_url
-      ? this.props.editIssueBody(owner, repoName, issue.number, text)
-      : this.props.editIssueComment(comment.id, owner, repoName, text);
+    const action = isIssueDescription
+      ? this.props.editIssueBody(repoId, issue.number, text)
+      : this.props.editIssueComment(repoId, issue.number, commentId, text);
 
     action.then(() => navigation.goBack());
   };

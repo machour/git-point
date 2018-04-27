@@ -42,15 +42,15 @@ export const ISSUES_GET_COMMENTS = createPaginationActionSet(
 
 export const ISSUES_CREATE_COMMENT = createPaginationItemActionSet(
   'ISSUE_CREATE_COMMENT',
-  ISSUES_GET_COMMENTS
+  GRAPHQL_ISSUES_TIMELINE_PAGINATION
 );
 export const ISSUES_DELETE_COMMENT = createPaginationItemActionSet(
   'ISSUE_DELETE_COMMENT',
-  ISSUES_GET_COMMENTS
+  GRAPHQL_ISSUES_TIMELINE_PAGINATION
 );
 export const ISSUES_EDIT_COMMENT = createPaginationItemActionSet(
   'ISSUE_EDIT_COMMENT',
-  ISSUES_GET_COMMENTS
+  GRAPHQL_ISSUES_TIMELINE_PAGINATION
 );
 
 export const ISSUES_EDIT = createActionSet('ISSUE_EDIT');

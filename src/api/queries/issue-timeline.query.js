@@ -25,12 +25,13 @@ query ($owner: String!, $name: String!, $number: Int!, $cursor: String!) {
           node {
             __typename
             ... on IssueComment {
-              id
+              id: databaseId
               createdAt
               author {
                 login
                 avatarUrl
               }
+              body
               bodyHTML
               reactionGroups {
                 content

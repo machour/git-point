@@ -34,7 +34,6 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = state => ({
   locale: state.auth.locale,
-  repository: state.repository.repository,
   isPendingSubmitting: state.issue.isPendingSubmitting,
 });
 
@@ -48,9 +47,9 @@ const mapDispatchToProps = dispatch =>
 
 class NewIssue extends Component {
   props: {
+    repoId: string,
     submitNewIssue: Function,
     locale: string,
-    repository: Object,
     navigation: Object,
     isPendingSubmitting: boolean,
   };
@@ -72,17 +71,17 @@ class NewIssue extends Component {
   }
 
   submitNewIssue = () => {
-    const { submitNewIssue, repository, locale, navigation } = this.props;
+    const { submitNewIssue, locale, navigation } = this.props;
     const { issueTitle, issueComment } = this.state;
-    const repoName = repository.name;
-    const owner = repository.owner.login;
+
+    const { repoId } = navigation.state.params;
 
     if (issueTitle === '') {
       Alert.alert(t('You need to have an issue title!', locale), null, [
         { text: t('OK', locale) },
       ]);
     } else {
-      submitNewIssue(owner, repoName, issueTitle, issueComment).then(issue => {
+      submitNewIssue(repoId, issueTitle, issueComment).then(issue => {
         navigation.navigate('Issue', {
           issue,
           headerLeft: null,
@@ -93,26 +92,27 @@ class NewIssue extends Component {
   };
 
   render() {
-    const { locale, repository, isPendingSubmitting } = this.props;
+    const { locale, navigation, isPendingSubmitting } = this.props;
     const { issueTitle, issueComment } = this.state;
+
+    const { repoId } = navigation.state.params;
 
     return (
       <ViewContainer>
         {isPendingSubmitting && <LoadingModal />}
         <ScrollView>
-          {repository.full_name && (
-            <ListItem
-              title={repository.full_name}
-              titleStyle={styles.titleSmall}
-              leftIcon={{
-                name: 'repo',
-                size: 17,
-                color: colors.grey,
-                type: 'octicon',
-              }}
-              hideChevron
-            />
-          )}
+          <ListItem
+            title={repoId}
+            titleStyle={styles.titleSmall}
+            leftIcon={{
+              name: 'repo',
+              size: 17,
+              color: colors.grey,
+              type: 'octicon',
+            }}
+            hideChevron
+          />
+
           <SectionList title={t('Issue Title', locale)}>
             <TextInput
               underlineColorAndroid={'transparent'}

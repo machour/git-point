@@ -83,6 +83,7 @@ const MergeButtonContainer = styled.View`
 export class IssueDescription extends Component {
   props: {
     issue: Object,
+    labels: Array,
     repoId: String,
     onRepositoryPress: Function,
     locale: string,
@@ -96,7 +97,14 @@ export class IssueDescription extends Component {
   };
 
   render() {
-    const { issue, repoId, onRepositoryPress, locale, navigation } = this.props;
+    const {
+      issue,
+      labels,
+      repoId,
+      onRepositoryPress,
+      locale,
+      navigation,
+    } = this.props;
 
     return (
       <ContainerBorderBottom>
@@ -130,11 +138,10 @@ export class IssueDescription extends Component {
           <StateBadge issue={issue} locale={locale} />
         </HeaderContainer>
 
-        {issue.labels &&
-          issue.labels.nodes &&
-          issue.labels.nodes.length > 0 && (
+        {labels &&
+          labels.length > 0 && (
             <LabelButtonGroup>
-              {this.renderLabelButtons(issue.labels.nodes)}
+              {this.renderLabelButtons(labels)}
             </LabelButtonGroup>
           )}
         {issue.assignees &&

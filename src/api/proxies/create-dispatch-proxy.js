@@ -199,6 +199,21 @@ export const createDispatchProxy = (Provider: Client) => {
                   callType.schema
                 );
 
+                // 11-1. Did we just create a pagination item? If so, append it to its
+                // related pagination
+                if (callType.type === 'create' && action.pagination) {
+                  dispatch({
+                    ...normalizedJson,
+                    pagination: {
+                      name: action.pagination.actionName,
+                      key: paginationKey,
+                      ids: [normalizedJson.result],
+                    },
+                    id: paginationKey,
+                    type: action.pagination.APPEND,
+                  });
+                }
+
                 // 11. Did we get a next page of results for a pagination?
                 // If so, prepare the structure that will be merged in the existing
                 // pagination state.
