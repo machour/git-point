@@ -22,14 +22,6 @@ import {
 import { RestClient, v3 } from 'api';
 import { t, formatEventsToRender, openURLInView } from 'utils';
 import { colors } from 'config';
-import { getRepository, getContributors } from 'repository';
-import {
-  getIssueComments,
-  postIssueComment,
-  getIssueFromUrl,
-  deleteIssueComment,
-  getIssueEvents,
-} from '../issue.action';
 
 const getRepoAndIssueFromUrl = url => {
   const re = /https:\/\/api.github.com\/repos\/(.*)\/issues\/(\d+)$/;
@@ -149,6 +141,13 @@ class Issue extends Component {
   };
 
   props: {
+    repoId: string,
+    issueNumber: number,
+    getIssue: Function,
+    locale: string,
+    navigation: Object,
+    issue: Object,
+    // OLD
     getIssueComments: Function,
     getRepository: Function,
     getContributors: Function,
@@ -157,7 +156,6 @@ class Issue extends Component {
     getIssueEvents: Function,
     deleteIssueComment: Function,
     diff: string,
-    issue: Object,
     pr: Object,
     isMerged: boolean,
     authUser: Object,
@@ -173,8 +171,6 @@ class Issue extends Component {
     isDeletingComment: boolean,
     isPendingContributors: boolean,
     // isPostingComment: boolean,
-    locale: string,
-    navigation: Object,
   };
 
   componentDidMount() {
@@ -428,6 +424,15 @@ class Issue extends Component {
             keyExtractor={this.keyExtractor}
             renderItem={this.renderItem}
           />
+          <CommentInput
+            users={[]}
+            userHasPushPermission={
+              navigation.state.params.userHasPushPermission
+            }
+            issueLocked={issue && issue.locked}
+            locale={locale}
+            onSubmit={this.postComment}
+          />
         </KeyboardAvoidingView>
       </ViewContainer>
     );
@@ -446,15 +451,6 @@ class Issue extends Component {
       locale,
       navigation,
     } = this.props;
-
-    console.log(this.props);
-
-    const a = true;
-    return (
-      <ViewContainer>
-        {a && <LoadingContainer animating={a} center />}
-      </ViewContainer>
-    );
 
     const isLoadingData = !!(
       isPendingComments ||

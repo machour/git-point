@@ -16,6 +16,7 @@ query ($owner: String!, $name: String!, $number: Int!) {
     issue(number: $number) {
       number
       state
+      locked
       createdAt
       closedAt
       title
