@@ -218,6 +218,7 @@ class IssueList extends Component {
     <IssueListItem
       type={this.props.navigation.state.params.type}
       issue={item}
+      repoId={this.props.navigation.state.params.repoId}
       navigation={this.props.navigation}
       locale={this.props.locale}
     />
@@ -292,7 +293,7 @@ class IssueList extends Component {
               this.issueList = ref;
             }}
             removeClippedSubviews={false}
-            data={this.getList()}
+            data={() => this.getList()}
             keyExtractor={this.keyExtractor}
             renderItem={this.renderItem}
           />

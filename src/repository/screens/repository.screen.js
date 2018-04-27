@@ -427,6 +427,7 @@ class Repository extends Component {
                     navigation.navigate('IssueList', {
                       title: t('Issues', locale),
                       type: 'issue',
+                      repoId,
                       issues: repository.issues.nodes.map(issue =>
                         toOldIssueFormat(issue)
                       ),
@@ -441,6 +442,7 @@ class Repository extends Component {
                 {openIssues.map(item => (
                   <IssueListItem
                     key={item.id}
+                    repoId={repoId}
                     type="issue"
                     issue={toOldIssueFormat(item, repoId)}
                     navigation={navigation}
@@ -465,6 +467,7 @@ class Repository extends Component {
                   navigation.navigate('PullList', {
                     title: t('Pull Requests', locale),
                     type: 'pull',
+                    repoId,
                     issues: repository.pullRequests.nodes.map(issue =>
                       toOldIssueFormat(issue, repoId, true)
                     ),

@@ -22,6 +22,13 @@ export const ORGS_GET_BY_ID = createActionSet('ORGS_GET_BY_ID');
 export const GRAPHQL_GET_REPO = createActionSet('GRAPHQL_GET_REPO');
 export const GRAPHQL_GET_ISSUE = createActionSet('GRAPHQL_GET_ISSUE');
 
+export const GRAPHQL_ISSUES_TIMELINE_PAGINATION = createPaginationActionSet(
+  'GRAPHQL_ISSUES_TIMELINE_PAGINATION'
+);
+export const GRAPHQL_ISSUES_LABELS_PAGINATION = createPaginationActionSet(
+  'GRAPHQL_ISSUES_LABELS_PAGINATION'
+);
+
 export const REPOS_GET_CONTRIBUTORS = createPaginationActionSet(
   'REPOS_GET_CONTRIBUTORS'
 );

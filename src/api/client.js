@@ -6,7 +6,7 @@ import { version } from 'package.json';
 import { Platform } from 'react-native';
 
 import Schemas from './schemas';
-import { repoQuery, issueQuery } from './queries';
+import { repoQuery, issueQuery, issueTimelineQuery } from './queries';
 
 type SpecialParameters = {
   forceRefresh?: boolean,
@@ -251,14 +251,26 @@ export class Client {
     getIssue: (
       repoId: string,
       number: number,
+      cursor: string = '',
       params: SpecialParameters = {}
     ) => {
       const [owner, name] = repoId.split('/');
 
+      console.log('getIssue(' + repoId + ',' + number + ',' + cursor + ')');
+
+      if (cursor === '') {
+        return this.query({
+          params,
+          query: issueQuery,
+          variables: { owner, name, number: parseInt(number, 10) },
+          schema: Schemas.GQL_ISSUE,
+        });
+      }
+
       return this.query({
         params,
-        query: issueQuery,
-        variables: { owner, name, number: parseInt(number, 10) },
+        query: issueTimelineQuery,
+        variables: { owner, name, number: parseInt(number, 10), cursor },
         schema: Schemas.GQL_ISSUE,
       });
     },

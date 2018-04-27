@@ -29,8 +29,8 @@ const getRepoAndIssueFromUrl = url => {
 
   return { repoId: matches[1], issueNumber: matches[2] };
 };
-/*
-const mapStateToProps = state => ({
+
+/* const mapStateToProps = state => ({
   locale: state.auth.locale,
   authUser: state.auth.user,
   repository: state.repository.repository,
@@ -48,25 +48,44 @@ const mapStateToProps = state => ({
   isPostingComment: state.issue.isPostingComment,
   isPendingContributors: state.repository.isPendingContributors,
   isDeletingComment: state.issue.isDeletingComment,
-});*/
+}); */
 
 const mapStateToProps = (state, ownProps) => {
   const {
-    entities: { issues, users, repos },
-    pagination: { ISSUES_GET_COMMENTS, ISSUES_GET_EVENTS, REPOS_GET_LABELS },
+    entities: { issues, issueTimelineItems, users, repos },
+    gqlPagination: {
+      GRAPHQL_ISSUES_LABELS_PAGINATION,
+      GRAPHQL_ISSUES_TIMELINE_PAGINATION,
+    },
   } = state;
 
-  const { repoId, issueNumber } = getRepoAndIssueFromUrl(
-    ownProps.navigation.state.params.issue.url
-  );
+  console.log('navigation', ownProps.navigation.state.params);
+
+  const { repoId, issueNumber } = ownProps.navigation.state.params.repoId
+    ? {
+        repoId: ownProps.navigation.state.params.repoId,
+        issueNumber: ownProps.navigation.state.params.issueNumber,
+      }
+    : getRepoAndIssueFromUrl(ownProps.navigation.state.params.issue.url);
 
   const repository = repos[repoId];
 
   const issueFQN = `${repoId}-${issueNumber}`;
-  const issue = issues[issueFQN] || ownProps.navigation.state.params.issue;
+  const issue = issues[issueFQN] || false;
+
+  const timelinePagination = GRAPHQL_ISSUES_TIMELINE_PAGINATION[issueFQN] || {
+    isFetching: true,
+    ids: [],
+    pageInfo: {},
+  };
+
+  console.log('tt', timelinePagination);
+  const timeline = timelinePagination.ids.map(id => issueTimelineItems[id]);
 
   return {
     issue,
+    timeline,
+    timelinePagination,
     repoId,
     repository,
     issueNumber,
@@ -76,21 +95,6 @@ const mapStateToProps = (state, ownProps) => {
 const mapDispatchToProps = {
   getIssue: RestClient.graphql.getIssue,
 };
-
-/*
-const mapDispatchToProps = dispatch =>
-  bindActionCreators(
-    {
-      getIssueComments,
-      getRepository,
-      getContributors,
-      postIssueComment,
-      getIssueFromUrl,
-      deleteIssueComment,
-      getIssueEvents,
-    },
-    dispatch
-  );*/
 
 const compareCreatedAt = (a, b) => {
   if (a.created_at < b.created_at) {
@@ -147,13 +151,13 @@ class Issue extends Component {
     locale: string,
     navigation: Object,
     issue: Object,
+    timeline: Array,
+    timelinePagination: Object,
     // OLD
-    getIssueComments: Function,
     getRepository: Function,
     getContributors: Function,
     postIssueComment: Function,
     getIssueFromUrl: Function,
-    getIssueEvents: Function,
     deleteIssueComment: Function,
     diff: string,
     pr: Object,
@@ -195,10 +199,13 @@ class Issue extends Component {
       node.attribs.class &&
       node.attribs.class.includes('issue-link')
     ) {
+      const re = /https:\/\/github.com\/(.*)\/issues\/(\d+)$/;
+      const matches = re.exec(node.attribs.href);
+
+      console.log('node', node);
       navigation.navigate('Issue', {
-        issueURL: node.attribs.href
-          .replace('https://github.com', `${v3.root}/repos`)
-          .replace(/pull\/([0-9]+)$/, 'issues/$1'),
+        repoId: matches[1],
+        issueNumber: matches[2],
       });
     } else {
       Linking.openURL(node.attribs.href);
@@ -214,53 +221,11 @@ class Issue extends Component {
   };
 
   getIssueInformation = () => {
-    const {
-      repoId,
-      issueNumber,
-      navigation,
-      repository,
-      getIssueComments,
-      getRepository,
-      getContributors,
-      getIssueFromUrl,
-      getIssueEvents,
-      getIssue,
-    } = this.props;
-
-    const params = navigation.state.params;
-    const issueURL = params.issueURL || params.issue.url;
+    const { repoId, issueNumber, getIssue } = this.props;
 
     getIssue(repoId, issueNumber);
 
     return Promise.resolve(true);
-
-    Promise.all([
-      getIssueFromUrl(issueURL),
-      getIssueComments(`${issueURL}/comments`),
-    ])
-      .then(() => {
-        const issue = this.props.issue;
-
-        if (repository.full_name !== issueRepository) {
-          return Promise.all([
-            getRepository(issue.repository_url),
-            getContributors(this.getContributorsLink(issue.repository_url)),
-          ]);
-        }
-
-        return [];
-      })
-      .then(() => {
-        const { issue, repository } = this.props;
-
-        this.setNavigationParams();
-
-        return getIssueEvents(
-          repository.owner.login,
-          repository.name,
-          issue.number
-        );
-      });
   };
 
   getContributorsLink = repository => `${repository}/contributors`;
@@ -378,9 +343,26 @@ class Issue extends Component {
   };
 
   render() {
-    const { issue, locale, navigation, repoId } = this.props;
+    const {
+      issue,
+      timeline,
+      timelinePagination,
+      issueNumber,
+      locale,
+      navigation,
+      repoId,
+    } = this.props;
 
     const isLoading = !issue;
+
+    console.log('Issue', issue);
+
+    const timelineCursor = timelinePagination
+      ? timelinePagination.pageInfo.endCursor
+      : '';
+    //      issue && issue.timeline ? issue.timeline.pageInfo.endCursor : '';
+
+    console.log('titmeline', timeline);
 
     return (
       <ViewContainer>
@@ -392,38 +374,42 @@ class Issue extends Component {
             android: -200,
           })}
         >
-          <FlatList
-            ref={ref => {
-              this.commentsList = ref;
-            }}
-            refreshing={isLoading}
-            onRefresh={this.getIssueInformation}
-            contentContainerStyle={{ flexGrow: 1 }}
-            removeClippedSubviews={false}
-            data={[
-              <IssueDescription
-                issue={issue}
-                repoId={repoId}
-                onRepositoryPress={repoId => this.onRepositoryPress(repoId)}
-                onLinkPress={node => this.onLinkPress(node)}
-                locale={locale}
-                navigation={navigation}
-              />,
-              <CommentListItem
-                comment={issue}
-                onLinkPress={node => this.onLinkPress(node)}
-                onDeletePress={this.deleteComment}
-                onEditPress={this.editComment}
-                locale={locale}
-                navigation={navigation}
-              />,
-              ...(issue && issue.timeline
-                ? formatEventsToRender(issue.timeline.nodes)
-                : []),
-            ]}
-            keyExtractor={this.keyExtractor}
-            renderItem={this.renderItem}
-          />
+          {issue && (
+            <FlatList
+              ref={ref => {
+                this.commentsList = ref;
+              }}
+              refreshing={isLoading}
+              onRefresh={this.getIssueInformation}
+              contentContainerStyle={{ flexGrow: 1 }}
+              removeClippedSubviews={false}
+              onEndReached={() =>
+                timelineCursor &&
+                this.props.getIssue(repoId, issueNumber, timelineCursor)
+              }
+              data={[
+                <IssueDescription
+                  issue={issue}
+                  repoId={repoId}
+                  onRepositoryPress={repoId => this.onRepositoryPress(repoId)}
+                  onLinkPress={node => this.onLinkPress(node)}
+                  locale={locale}
+                  navigation={navigation}
+                />,
+                <CommentListItem
+                  comment={issue}
+                  onLinkPress={node => this.onLinkPress(node)}
+                  onDeletePress={this.deleteComment}
+                  onEditPress={this.editComment}
+                  locale={locale}
+                  navigation={navigation}
+                />,
+                ...formatEventsToRender(timeline),
+              ]}
+              keyExtractor={this.keyExtractor}
+              renderItem={this.renderItem}
+            />
+          )}
           <CommentInput
             users={[]}
             userHasPushPermission={

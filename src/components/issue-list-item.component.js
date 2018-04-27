@@ -8,6 +8,7 @@ import { t, relativeTimeToNow } from 'utils';
 type Props = {
   type: string,
   issue: Object,
+  repoId: string,
   navigation: Object,
   locale: string,
 };
@@ -60,13 +61,19 @@ const getIconName = (type, issue) => {
   return 'git-pull-request';
 };
 
-export const IssueListItem = ({ type, issue, navigation, locale }: Props) => (
+export const IssueListItem = ({
+  type,
+  repoId,
+  issue,
+  navigation,
+  locale,
+}: Props) => (
   <TouchableHighlight
     style={issue.state === 'closed' && styles.closedIssue}
     onPress={() =>
       navigation.navigate('Issue', {
-        issue,
-        isPR: !!issue.pull_request,
+        repoId,
+        issueNumber: issue.number,
         locale,
       })
     }

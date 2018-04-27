@@ -10,6 +10,25 @@ import {
 } from 'utils/api-helpers';
 import { type CallParameters, Client } from '../client';
 
+const getGqlPaginations = (j, path = 'data') => {
+  let local = [];
+
+  if (j) {
+    Object.keys(j).forEach(k => {
+      if (k === 'pageInfo') {
+        console.log('found pageInfo', j[k]);
+        local.push({ path, pagination: j });
+      }
+
+      if (typeof j[k] === 'object') {
+        local = [...local, ...getGqlPaginations(j[k], `${path}.${k}`)];
+      }
+    });
+  }
+
+  return local;
+};
+
 export const createDispatchProxy = (Provider: Client) => {
   const client: Client = new Provider();
 
@@ -201,6 +220,30 @@ export const createDispatchProxy = (Provider: Client) => {
                   type: action.SUCCESS,
                 });
 
+                if (callType.type === 'query') {
+                  // Inspect the JSON for paginations
+                  const gqlPaginations = getGqlPaginations(normalizedJson);
+
+                  console.log('gqlPaginations', gqlPaginations);
+                  // Found pagination, dispatch creation event
+                  gqlPaginations.forEach(paginationInfo => {
+                    const re = /data\.entities\.([^.]+)\.([^.]+)\.([^.]+)/;
+                    const res = paginationInfo.path.match(re);
+
+                    const aName = `GRAPHQL_${res[1].toUpperCase()}_${res[3].toUpperCase()}_PAGINATION`;
+
+                    const key = res[2];
+
+                    dispatch({
+                      type: Actions[aName].SUCCESS,
+                      id: key,
+                      pagination: paginationInfo.pagination,
+                    });
+
+                    delete normalizedJson.entities[res[1]][res[2]][res[3]];
+                  });
+                }
+
                 return Promise.resolve();
               });
             })
@@ -208,6 +251,7 @@ export const createDispatchProxy = (Provider: Client) => {
               dispatch({
                 id: paginationKey,
                 type: action.ERROR,
+                error,
               });
 
               return displayError(error.toString());

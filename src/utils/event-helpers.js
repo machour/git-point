@@ -1,5 +1,6 @@
 import differenceInMilliseconds from 'date-fns/difference_in_milliseconds';
 
+// TODO: Also group assigned/unassigned
 export function formatEventsToRender(events = []) {
   return events
     .filter(
@@ -13,14 +14,10 @@ export function formatEventsToRender(events = []) {
 
       // Merge events are always followed by a closed event, but we don't
       // want to render them.
-      if (
+      return !(
         __typename === 'ClosedEvent' &&
         list[index - 1].__typename === 'MergedEvent'
-      ) {
-        return false;
-      }
-
-      return true;
+      );
     })
     .reduce((results, event, index, list) => {
       // Label events are recorded individually, but we want to group them for display

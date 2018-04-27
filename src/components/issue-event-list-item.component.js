@@ -95,6 +95,13 @@ export class IssueEventListItem extends Component {
     this.props.navigation.navigate('Profile', { user });
   };
 
+  onPressIssue = source => {
+    this.props.navigation.navigate('Issue', {
+      repoId: source.repository.nameWithOwner.toLowerCase(),
+      issueNumber: source.number,
+    });
+  };
+
   handleReviewRequested(event, repository) {
     // FIXME: repository should not exist
     const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
@@ -435,6 +442,29 @@ export class IssueEventListItem extends Component {
     );
   }
 
+  handleCrossReferencedEvent(event) {
+    return (
+      <Event
+        iconName="link"
+        text={
+          <Text>
+            {t('{actor} referenced this from {source}', this.props.locale, {
+              actor: (
+                <ActorLink actor={event.actor} onPress={this.onPressUser} />
+              ),
+              source: (
+                <BoldText onPress={() => this.onPressIssue(event.source)}>
+                  {'#' + event.source.number}
+                </BoldText>
+              ),
+            })}
+          </Text>
+        }
+        createdAt={event.createdAt}
+      />
+    );
+  }
+
   // This is a fake event created by formatEventsToRender()
   handleLabelGroupEvent(event) {
     return <LabelGroup group={event} onPressUser={this.onPressUser} />;
@@ -447,6 +477,8 @@ export class IssueEventListItem extends Component {
     if (typeof this[handler] === 'function') {
       return this[handler](event, repository);
     }
+
+    console.log('Unhandled event type: ' + event.__typename);
 
     return null;
   }

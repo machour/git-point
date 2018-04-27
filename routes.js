@@ -140,13 +140,11 @@ const sharedRoutes = {
   Issue: {
     screen: IssueScreen,
     navigationOptions: ({ navigation }) => {
-      const issueNumberRegex = /issues\/([0-9]+)(#|$)/;
-      const { issue, issueURL, isPR, locale } = navigation.state.params;
-      const number = issue ? issue.number : issueURL.match(issueNumberRegex)[1];
+      const { issueNumber, isPR, locale } = navigation.state.params;
       const langTitle = isPR ? t('Pull Request', locale) : t('Issue', locale);
 
       return {
-        title: `${langTitle} #${number}`,
+        title: `${langTitle} #${issueNumber}`,
         headerLeft: navigation.state.params.headerLeft,
         gesturesEnabled: !(navigation.state.params.gesturesEnabled === false),
       };

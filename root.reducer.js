@@ -5,7 +5,7 @@ import { repositoryReducer } from 'repository';
 import { organizationReducer } from 'organization';
 import { issueReducer } from 'issue';
 import { notificationsReducer } from 'notifications';
-import { entities, pagination } from 'api/reducers';
+import { entities, pagination, gqlPagination } from 'api/reducers';
 
 export const rootReducer = combineReducers({
   auth: authReducer,
@@ -16,4 +16,5 @@ export const rootReducer = combineReducers({
   notifications: notificationsReducer,
   entities,
   pagination,
+  gqlPagination,
 });

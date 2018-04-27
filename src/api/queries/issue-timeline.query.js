@@ -7,48 +7,14 @@ actor {
 }
 `;
 
-export const issueQuery = `
-query ($owner: String!, $name: String!, $number: Int!) {
+export const issueTimelineQuery = `
+query ($owner: String!, $name: String!, $number: Int!, $cursor: String!) {
   repository(owner: $owner, name: $name) {
     nameWithOwner
-    assignableUsers(first: 50) {
-      nodes {
-        login
-        avatarUrl
-      }
-    }
-    labels(first: 50) {
-      nodes {
-        name
-      }
-    }
     issue(number: $number) {
       number
       state
-      locked
-      createdAt
-      closedAt
-      title
-      bodyHTML
-      labels(first: 50) {
-        pageInfo {
-          startCursor
-          endCursor
-          hasNextPage
-          hasPreviousPage
-        }
-        edges {
-          node {
-            color
-            name
-          }
-        }
-      }
-      author {
-        login
-        avatarUrl
-      }
-      timeline(first: 10) {
+      timeline(first: 10, after: $cursor) {
         pageInfo {
           startCursor
           endCursor
