@@ -15,7 +15,7 @@ const mapStateToProps = state => {
   const {
     auth: { user, locale },
     pagination: { ACTIVITY_GET_EVENTS_RECEIVED },
-    entities: { events },
+    entities: { events, issues },
   } = state;
 
   const userEventsPagination = ACTIVITY_GET_EVENTS_RECEIVED[user.login] || {
@@ -25,6 +25,7 @@ const mapStateToProps = state => {
 
   return {
     user,
+    issues,
     userEventsPagination,
     userEvents,
     locale,
@@ -111,9 +112,12 @@ class Events extends Component {
   };
 
   getIssueLink(userEvent) {
+    const { issues } = this.props;
+    const issue = issues[userEvent.payload.issue];
+
     return (
       <LinkDescription onPress={() => this.navigateToIssue(userEvent)}>
-        {userEvent.payload.issue.title}
+        {issue.title}
       </LinkDescription>
     );
   }
@@ -554,8 +558,10 @@ class Events extends Component {
   };
 
   navigateToIssue = userEvent => {
-    this.props.navigation.navigate('Issue', {
-      issueNumber: userEvent.payload.issue.number,
+    const { navigation, issues } = this.props;
+
+    navigation.navigate('Issue', {
+      issueNumber: issues[userEvent.payload.issue].number,
       repoId: userEvent.repo.name.toLowerCase(),
     });
   };

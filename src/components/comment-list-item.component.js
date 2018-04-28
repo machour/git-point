@@ -47,6 +47,19 @@ const DateContainer = styled.View`
   justify-content: center;
 `;
 
+const Author = styled.Text`
+  margin-left: 5;
+`;
+
+const AuthorAssociation = styled.Text`
+  background-color: ${colors.greyLight};
+  border: 1px solid ${colors.greyDark};
+  border-radius: 5;
+  font-size: ${normalize(10)};
+  margin: 3px;
+  padding: 3px;
+`;
+
 const LinkDescription = styled.Text`
   ${{ ...fonts.fontPrimaryBold }};
   font-size: ${normalize(13)};
@@ -89,7 +102,6 @@ class CommentListItemComponent extends Component {
     onDeletePress: Function,
     locale: string,
     navigation: Object,
-    authUser: Object,
   };
 
   ActionSheet: ActionSheet;
@@ -113,9 +125,13 @@ class CommentListItemComponent extends Component {
 
   commentActionSheetOptions = comment => {
     const { locale } = this.props;
-    const actions = [t('Edit', locale)];
+    const actions = [];
 
-    if (!comment.repository_url) {
+    if (comment.viewerCanUpdate) {
+      actions.push(t('Edit', locale));
+    }
+
+    if (comment.viewerCanDelete) {
       actions.push(t('Delete', locale));
     }
 
@@ -123,12 +139,11 @@ class CommentListItemComponent extends Component {
   };
 
   render() {
-    const { comment, locale, navigation, authUser, onLinkPress } = this.props;
+    const { comment, locale, navigation, onLinkPress } = this.props;
 
     const commentPresent = comment.bodyHTML && comment.bodyHTML !== '';
-
-    const isActionMenuEnabled =
-      comment.author && authUser.login === comment.author.login;
+    const commentActions = this.commentActionSheetOptions(comment);
+    const isActionMenuEnabled = commentActions.length > 0;
 
     return (
       <Container>
@@ -137,9 +152,7 @@ class CommentListItemComponent extends Component {
             <AvatarContainer
               onPress={() =>
                 navigation.navigate(
-                  authUser.login === comment.author.login
-                    ? 'AuthProfile'
-                    : 'Profile',
+                  comment.viewerDidAuthor ? 'AuthProfile' : 'Profile',
                   {
                     user: comment.author,
                   }
@@ -159,16 +172,17 @@ class CommentListItemComponent extends Component {
               <LinkDescription
                 onPress={() =>
                   navigation.navigate(
-                    authUser.login === comment.author.login
-                      ? 'AuthProfile'
-                      : 'Profile',
+                    comment.viewerDidAuthor ? 'AuthProfile' : 'Profile',
                     {
                       user: comment.author,
                     }
                   )
                 }
               >
-                {comment.author.login}
+                <Author>{comment.author.login}</Author>
+                <AuthorAssociation>
+                  {comment.authorAssociation.toLowerCase()}
+                </AuthorAssociation>
               </LinkDescription>
             </TitleSubtitleContainer>
           )}
@@ -178,7 +192,7 @@ class CommentListItemComponent extends Component {
           </DateContainer>
         </Header>
 
-        <CommentContainer bottomPadding={!isActionMenuEnabled}>
+        <CommentContainer bottomPadding={isActionMenuEnabled}>
           {commentPresent ? (
             <GithubHtmlView
               source={comment.bodyHTML}
@@ -208,10 +222,7 @@ class CommentListItemComponent extends Component {
             this.ActionSheet = o;
           }}
           title={t('Comment Actions', locale)}
-          options={[
-            ...this.commentActionSheetOptions(comment),
-            t('Cancel', locale),
-          ]}
+          options={[...commentActions, t('Cancel', locale)]}
           cancelButtonIndex={this.commentActionSheetOptions(comment).length}
           onPress={this.handlePress}
         />

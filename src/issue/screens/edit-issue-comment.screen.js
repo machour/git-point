@@ -40,8 +40,6 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = state => ({
   locale: state.auth.locale,
-  issue: state.issue.issue,
-  repository: state.repository.repository,
   isEditingComment: state.issue.isEditingComment,
 });
 
@@ -52,10 +50,8 @@ const mapDispatchToProps = {
 
 class EditIssueComment extends Component {
   props: {
-    isIssueDescription: boolean,
     locale: string,
     navigation: Object,
-    issue: Object,
     isEditingComment: boolean,
     editIssueBody: Function,
     editIssueComment: Function,
@@ -76,16 +72,18 @@ class EditIssueComment extends Component {
   }
 
   editComment = () => {
-    const { issue, isIssueDescription, navigation } = this.props;
-    const commentId = navigation.state.params.comment.id;
-    const repoId = navigation.state.params.repoId;
-
-    console.log('repoId is ' + repoId);
+    const { navigation, editIssueBody, editIssueComment } = this.props;
+    const {
+      isIssueDescription,
+      comment,
+      repoId,
+      issueNumber,
+    } = navigation.state.params;
 
     const text = this.state.issueComment;
     const action = isIssueDescription
-      ? this.props.editIssueBody(repoId, issue.number, text)
-      : this.props.editIssueComment(repoId, issue.number, commentId, text);
+      ? editIssueBody(repoId, issueNumber, { body: text })
+      : editIssueComment(repoId, issueNumber, comment.id, text);
 
     action.then(() => navigation.goBack());
   };

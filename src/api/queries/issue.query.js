@@ -12,14 +12,31 @@ query ($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
     nameWithOwner
     assignableUsers(first: 50) {
-      nodes {
-        login
-        avatarUrl
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        node {
+          login
+          avatarUrl
+        }
       }
     }
     labels(first: 50) {
-      nodes {
-        name
+      pageInfo {
+        startCursor
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      edges {
+        node {
+          name
+          color
+        }
       }
     }
     issue(number: $number) {
@@ -29,7 +46,9 @@ query ($owner: String!, $name: String!, $number: Int!) {
       createdAt
       closedAt
       title
+      body
       bodyHTML
+      viewerCanUpdate
       labels(first: 50) {
         pageInfo {
           startCursor
@@ -44,6 +63,7 @@ query ($owner: String!, $name: String!, $number: Int!) {
           }
         }
       }
+      authorAssociation
       author {
         login
         avatarUrl
@@ -61,6 +81,10 @@ query ($owner: String!, $name: String!, $number: Int!) {
             ... on IssueComment {
               id: databaseId
               createdAt
+              viewerCanUpdate
+              viewerCanDelete
+              viewerDidAuthor
+              authorAssociation
               author {
                 login
                 avatarUrl

@@ -49,7 +49,7 @@ const inputMinHeight = Platform.select({
 export class CommentInput extends Component {
   props: {
     users: Array,
-    userHasPushPermission: boolean,
+    viewerCanUpdate: boolean,
     issueLocked: boolean,
     locale: string,
     onSubmit: Function,
@@ -81,9 +81,9 @@ export class CommentInput extends Component {
   };
 
   render() {
-    const { userHasPushPermission, issueLocked, locale, users } = this.props;
+    const { viewerCanUpdate, issueLocked, locale, users } = this.props;
 
-    const userCanPost = !issueLocked || userHasPushPermission;
+    const userCanPost = !issueLocked || viewerCanUpdate;
 
     return (
       <Container>
@@ -99,7 +99,7 @@ export class CommentInput extends Component {
             <InputText
               underlineColorAndroid="transparent"
               placeholder={
-                issueLocked && userHasPushPermission
+                issueLocked && viewerCanUpdate
                   ? t('Locked, but you can still comment...', locale)
                   : t('Add a comment...', locale)
               }

@@ -27,6 +27,10 @@ query ($owner: String!, $name: String!, $number: Int!, $cursor: String!) {
             ... on IssueComment {
               id: databaseId
               createdAt
+              viewerCanUpdate
+              viewerCanDelete
+              viewerDidAuthor
+              authorAssociation
               author {
                 login
                 avatarUrl

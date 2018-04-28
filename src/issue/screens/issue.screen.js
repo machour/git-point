@@ -30,26 +30,6 @@ const getRepoAndIssueFromUrl = url => {
   return { repoId: matches[1], issueNumber: matches[2] };
 };
 
-/* const mapStateToProps = state => ({
-  locale: state.auth.locale,
-  authUser: state.auth.user,
-  repository: state.repository.repository,
-  contributors: state.repository.contributors,
-  issue: state.issue.issue,
-  diff: state.issue.diff,
-  pr: state.issue.pr,
-  isMerged: state.issue.isMerged,
-  comments: state.issue.comments,
-  events: state.issue.events,
-  isPendingDiff: state.issue.isPendingDiff,
-  isPendingCheckMerge: state.issue.isPendingCheckMerge,
-  isPendingComments: state.issue.isPendingComments,
-  isPendingEvents: state.issue.isPendingEvents,
-  isPostingComment: state.issue.isPostingComment,
-  isPendingContributors: state.repository.isPendingContributors,
-  isDeletingComment: state.issue.isDeletingComment,
-}); */
-
 const mapStateToProps = (state, ownProps) => {
   const {
     entities: { issues, issueTimelineItems, users, repos },
@@ -59,14 +39,14 @@ const mapStateToProps = (state, ownProps) => {
     },
   } = state;
 
-  console.log('navigation', ownProps.navigation.state.params);
+  const navigationParams = ownProps.navigation.state.params;
 
-  const { repoId, issueNumber } = ownProps.navigation.state.params.repoId
+  const { repoId, issueNumber } = navigationParams.repoId
     ? {
-        repoId: ownProps.navigation.state.params.repoId,
-        issueNumber: ownProps.navigation.state.params.issueNumber,
+        repoId: navigationParams.repoId,
+        issueNumber: navigationParams.issueNumber,
       }
-    : getRepoAndIssueFromUrl(ownProps.navigation.state.params.issue.url);
+    : getRepoAndIssueFromUrl(navigationParams.issue.url);
 
   const repository = repos[repoId];
 
@@ -87,6 +67,14 @@ const mapStateToProps = (state, ownProps) => {
   };
   const labels = labelsPagination.ids.map(item => item.node);
 
+  if (issue && !navigationParams.issue) {
+    ownProps.navigation.setParams({ issue });
+  }
+
+  if (issue && issue.viewerCanUpdate && !navigationParams.viewerCanUpdate) {
+    ownProps.navigation.setParams({ viewerCanUpdate: true });
+  }
+
   return {
     issue,
     timeline,
@@ -105,22 +93,14 @@ const mapDispatchToProps = {
   deleteIssueComment: RestClient.issues.deleteComment,
 };
 
-const compareCreatedAt = (a, b) => {
-  if (a.created_at < b.created_at) {
-    return -1;
-  } else if (a.created_at > b.created_at) {
-    return 1;
-  }
-
-  return 0;
-};
-
 class Issue extends Component {
   static navigationOptions = ({ navigation }) => {
     const getHeaderIcon = () => {
       const { state, navigate } = navigation;
 
-      if (state.params.userHasPushPermission) {
+      console.log('nav state', state);
+
+      if (state.params.viewerCanUpdate) {
         return (
           <Icon
             name="gear"
@@ -132,6 +112,8 @@ class Issue extends Component {
               navigate('IssueSettings', {
                 title: t('Settings', state.params.locale),
                 issue: state.params.issue,
+                repoId: state.params.repoId,
+                issueNumber: state.params.issue.number,
               })
             }
           />
@@ -171,21 +153,9 @@ class Issue extends Component {
     // OLD
     getRepository: Function,
     getContributors: Function,
-    getIssueFromUrl: Function,
-    diff: string,
-    pr: Object,
-    isMerged: boolean,
     authUser: Object,
     repository: Object,
     contributors: Array,
-    comments: Array,
-    events: Array,
-    isPendingIssue: boolean,
-    isPendingDiff: boolean,
-    isPendingCheckMerge: boolean,
-    isPendingComments: boolean,
-    isPendingEvents: boolean,
-    isDeletingComment: boolean,
     isPendingContributors: boolean,
     // isPostingComment: boolean,
   };
@@ -241,22 +211,41 @@ class Issue extends Component {
   };
 
   getContributorsLink = repository => `${repository}/contributors`;
+  getData() {
+    const { issue, labels, timeline, locale, navigation, repoId } = this.props;
 
+    return [
+      <IssueDescription
+        issue={issue}
+        labels={labels}
+        repoId={repoId}
+        onRepositoryPress={repoId => this.onRepositoryPress(repoId)}
+        onLinkPress={node => this.onLinkPress(node)}
+        locale={locale}
+        navigation={navigation}
+      />,
+      <CommentListItem
+        comment={issue}
+        onLinkPress={node => this.onLinkPress(node)}
+        onDeletePress={this.deleteComment}
+        onEditPress={comment => this.editComment(comment, true)}
+        locale={locale}
+        navigation={navigation}
+      />,
+      ...formatEventsToRender(timeline),
+    ];
+  }
   setNavigationParams = () => {
-    const { navigation, locale, repository } = this.props;
+    const { navigation, locale } = this.props;
 
     navigation.setParams({
       locale,
-      userHasPushPermission:
-        repository.permissions.admin || repository.permissions.push,
     });
   };
 
-  showActionSheet = () => this.ActionSheet.show();
-
   handleActionSheetPress = index => {
     if (index === 0) {
-      openURLInView(this.props.issue.html_url);
+      openURLInView(this.props.issue.webUrl);
     }
   };
 
@@ -275,46 +264,34 @@ class Issue extends Component {
     this.props.deleteIssueComment(repoId, issueNumber, comment.id);
   };
 
-  editComment = comment => {
+  editComment = (comment, isIssueDescription) => {
     const { state, navigate } = this.props.navigation;
-    const { repoId } = this.props;
+    const { repoId, issueNumber } = this.props;
 
     navigate('EditIssueComment', {
       title: t('Edit Comment', state.params.locale),
       repoId,
+      issueNumber,
       comment,
+      isIssueDescription,
     });
   };
+
+  showActionSheet = () => this.ActionSheet.show();
 
   keyExtractor = (item, index) => {
     return index;
   };
 
   renderHeader = () => {
-    const {
-      issue,
-      pr,
-      labels,
-      diff,
-      isMerged,
-      isPendingDiff,
-      isPendingCheckMerge,
-      locale,
-      navigation,
-    } = this.props;
+    const { issue, labels, locale, navigation } = this.props;
 
     return (
       <IssueDescription
         issue={issue}
         labels={labels}
-        diff={diff}
-        isMergeable={pr.mergeable}
-        isMerged={isMerged}
-        isPendingDiff={isPendingDiff}
-        isPendingCheckMerge={isPendingCheckMerge}
         onRepositoryPress={url => this.onRepositoryPress(url)}
         onLinkPress={node => this.onLinkPress(node)}
-        userHasPushPermission={navigation.state.params.userHasPushPermission}
         locale={locale}
         navigation={navigation}
       />
@@ -353,8 +330,6 @@ class Issue extends Component {
   render() {
     const {
       issue,
-      labels,
-      timeline,
       timelinePagination,
       issueNumber,
       locale,
@@ -392,134 +367,19 @@ class Issue extends Component {
                 timelineCursor &&
                 this.props.getIssue(repoId, issueNumber, timelineCursor)
               }
-              data={[
-                <IssueDescription
-                  issue={issue}
-                  labels={labels}
-                  repoId={repoId}
-                  onRepositoryPress={repoId => this.onRepositoryPress(repoId)}
-                  onLinkPress={node => this.onLinkPress(node)}
-                  locale={locale}
-                  navigation={navigation}
-                />,
-                <CommentListItem
-                  comment={issue}
-                  onLinkPress={node => this.onLinkPress(node)}
-                  onDeletePress={this.deleteComment}
-                  onEditPress={this.editComment}
-                  locale={locale}
-                  navigation={navigation}
-                />,
-                ...formatEventsToRender(timeline),
-              ]}
+              data={this.getData()}
               keyExtractor={this.keyExtractor}
               renderItem={this.renderItem}
             />
           )}
           <CommentInput
             users={[]}
-            userHasPushPermission={
-              navigation.state.params.userHasPushPermission
-            }
+            viewerCanUpdate={issue && issue.viewerCanUpdate}
             issueLocked={issue && issue.locked}
             locale={locale}
             onSubmit={this.postComment}
           />
         </KeyboardAvoidingView>
-
-        <ActionSheet
-          ref={o => {
-            this.ActionSheet = o;
-          }}
-          title={t('Issue Actions', locale)}
-          options={[...issuesActions, t('Cancel', locale)]}
-          cancelButtonIndex={1}
-          onPress={this.handleActionSheetPress}
-        />
-      </ViewContainer>
-    );
-  }
-
-  oldrender() {
-    const {
-      issue,
-      comments,
-      contributors,
-      isPendingComments,
-      isPendingEvents,
-      isPendingContributors,
-      isPendingIssue,
-      isDeletingComment,
-      locale,
-      navigation,
-    } = this.props;
-
-    const isLoadingData = !!(
-      isPendingComments ||
-      isPendingIssue ||
-      isDeletingComment
-    );
-    const isShowLoadingContainer =
-      isPendingComments || isPendingIssue || isPendingEvents;
-    const header = { header: true, created_at: '' };
-    const events = formatEventsToRender([...this.props.events]);
-    const conversation = !isPendingComments
-      ? [header, issue, ...comments, ...events].sort(compareCreatedAt)
-      : [header];
-
-    const participantNames = !isPendingComments
-      ? conversation.map(item => item && item.user && item.user.login)
-      : [];
-    const contributorNames = !isPendingContributors
-      ? contributors.map(item => item && item.login)
-      : [];
-    const fullUsers = [
-      ...new Set([...participantNames, ...contributorNames]),
-    ].filter(item => !!item);
-
-    const issuesActions = [t('Open in Browser', locale)];
-
-    return (
-      <ViewContainer>
-        {isShowLoadingContainer && (
-          <LoadingContainer animating={isShowLoadingContainer} center />
-        )}
-
-        {!isPendingComments &&
-          !isPendingIssue &&
-          issue && (
-            <KeyboardAvoidingView
-              style={{ flex: 1 }}
-              behavior={'padding'}
-              keyboardVerticalOffset={Platform.select({
-                ios: 65,
-                android: -200,
-              })}
-            >
-              <FlatList
-                ref={ref => {
-                  this.commentsList = ref;
-                }}
-                refreshing={isLoadingData}
-                onRefresh={this.getIssueInformation}
-                contentContainerStyle={{ flexGrow: 1 }}
-                removeClippedSubviews={false}
-                data={conversation}
-                keyExtractor={this.keyExtractor}
-                renderItem={this.renderItem}
-              />
-
-              <CommentInput
-                users={fullUsers}
-                userHasPushPermission={
-                  navigation.state.params.userHasPushPermission
-                }
-                issueLocked={issue.locked}
-                locale={locale}
-                onSubmit={this.postComment}
-              />
-            </KeyboardAvoidingView>
-          )}
 
         <ActionSheet
           ref={o => {

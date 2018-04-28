@@ -1,4 +1,5 @@
 import { schema } from 'normalizr';
+import { omit } from 'lodash';
 
 const labelSchema = new schema.Entity(
   'issues_labels',
@@ -31,15 +32,12 @@ export const gqlIssueSchema = new schema.Entity(
     },
   },
   {
-    idAttribute: ({ repository, repository: { issue } }) => {
+    idAttribute: (issue, repository) => {
       return `${repository.nameWithOwner}-${issue.number}`;
     },
-    processStrategy: ({ repository, repository: { issue } }) => ({
+    processStrategy: (issue, repository) => ({
       ...issue,
-      labels: {
-        ...issue.labels,
-        repoId: repository.nameWithOwner.toLowerCase(),
-      },
+
       state: issue.state.toLowerCase(),
       webUrl: `https://github.com/${repository.nameWithOwner}/issues/${
         issue.number

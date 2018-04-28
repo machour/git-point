@@ -273,7 +273,7 @@ export class Client {
           params,
           query: issueQuery,
           variables: { owner, name, number: parseInt(number, 10) },
-          schema: Schemas.GQL_ISSUE,
+          schema: Schemas.GQL_REPO_WITH_ISSUE,
         });
       }
 
@@ -281,7 +281,7 @@ export class Client {
         params,
         query: issueTimelineQuery,
         variables: { owner, name, number: parseInt(number, 10), cursor },
-        schema: Schemas.GQL_ISSUE,
+        schema: Schemas.GQL_REPO_WITH_ISSUE,
       });
     },
   };
@@ -425,12 +425,12 @@ export class Client {
         endpoint: `repos/${repoId}/issues/${number}/lock`,
         params,
         schema: Schemas.ISSUE,
-        changeEntity: {
+        updateEntity: {
           type: 'issues',
           id: `${repoId}-${number}`,
-          changes: {
+          updater: () => ({
             locked: true,
-          },
+          }),
         },
       }),
 
@@ -439,12 +439,12 @@ export class Client {
         endpoint: `repos/${repoId}/issues/${number}/lock`,
         params,
         schema: Schemas.ISSUE,
-        changeEntity: {
+        updateEntity: {
           type: 'issues',
           id: `${repoId}-${number}`,
-          changes: {
+          updater: () => ({
             locked: false,
-          },
+          }),
         },
       }),
 
@@ -484,7 +484,7 @@ export class Client {
         paginationArgs: [repoId, number],
         updater: issueTimelineItem => ({
           ...issueTimelineItem,
-          bodyHTML: issueTimelineItem.body_HTML,
+          bodyHTML: issueTimelineItem.body_html, // FIXME: is this ok?
         }),
       }),
 

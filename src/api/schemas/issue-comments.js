@@ -15,6 +15,7 @@ export const issueCommentSchema = new schema.Entity(
         login: comment.user.login,
         avatarUrl: comment.user.avatar_url,
       },
+      authorAssociation: comment.author_association,
       reactionGroups: [],
     }),
   }

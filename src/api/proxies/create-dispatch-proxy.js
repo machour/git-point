@@ -247,6 +247,7 @@ export const createDispatchProxy = (Provider: Client) => {
 
                     const aName = `GRAPHQL_${res[1].toUpperCase()}_${res[3].toUpperCase()}_PAGINATION`;
 
+                    console.log('aName: ' + aName);
                     const key = res[2];
 
                     dispatch({
@@ -255,6 +256,7 @@ export const createDispatchProxy = (Provider: Client) => {
                       pagination: paginationInfo.pagination,
                     });
 
+                    // TODO: this should be done before step 12.
                     delete normalizedJson.entities[res[1]][res[2]][res[3]];
                   });
                 }
