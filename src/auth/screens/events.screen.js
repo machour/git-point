@@ -552,7 +552,7 @@ class Events extends Component {
 
     navigation.navigate('Issue', {
       issueNumber: issues[userEvent.payload.issue].number,
-      repoId: userEvent.repo.name.toLowerCase(),
+      repoId: userEvent.repo,
     });
   };
 
