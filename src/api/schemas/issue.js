@@ -52,7 +52,7 @@ export const issueSchema = new schema.Entity(
       state: issue.state,
       locked: issue.locked,
       createdAt: issue.created_at,
-      closedAt: issue.closedAt,
+      closedAt: issue.closed_at,
       title: issue.title,
       body: issue.body,
       bodyHTML: issue.body_html,

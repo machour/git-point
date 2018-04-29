@@ -145,7 +145,7 @@ class IssueList extends Component {
   };
 
   state: {
-    query: string,
+    keyword: string,
     searchType: number,
     searchStart: boolean,
     searchFocus: boolean,
@@ -155,9 +155,8 @@ class IssueList extends Component {
     super();
 
     this.state = {
-      query: '',
       searchType: SearchType.OPEN,
-      keyword: false,
+      keyword: '',
       searchStart: false,
       searchFocus: false,
     };
@@ -251,7 +250,7 @@ class IssueList extends Component {
 
   render() {
     const { locale, issues, issuesPagination } = this.props;
-    const { query, searchType, keyword, searchFocus } = this.state;
+    const { searchType, keyword, searchFocus } = this.state;
 
     const isPendingSearch = issuesPagination.isFetching && issues.length === 0;
 
@@ -266,7 +265,7 @@ class IssueList extends Component {
                 showsCancelButton={searchFocus}
                 onFocus={() => this.setState({ searchFocus: true })}
                 onCancelButtonPress={() =>
-                  this.setState({ searchStart: false, query: '' })
+                  this.setState({ searchStart: false, keyword: '' })
                 }
                 onSearchButtonPress={text => {
                   this.search(text);
@@ -285,8 +284,6 @@ class IssueList extends Component {
             containerStyle={styles.buttonGroupContainer}
           />
         </View>
-
-        <Text>${`Query is ${query}`}</Text>
 
         {isPendingSearch && (
           <LoadingContainer
