@@ -7,6 +7,133 @@ actor {
 }
 `;
 
+export const issueTimelineEdges = `
+edges {
+  node {
+    __typename
+    ... on IssueComment {
+      id: databaseId
+      createdAt
+      viewerCanUpdate
+      viewerCanDelete
+      viewerDidAuthor
+      authorAssociation
+      author {
+        login
+        avatarUrl
+      }
+      body
+      bodyHTML
+      reactionGroups {
+        content
+        users {
+          totalCount
+        }
+      }
+    }
+    ... on CrossReferencedEvent {
+      ${timelineEventCommonFields}
+      isCrossRepository
+      source {
+        __typename
+        ... on Issue {
+          title
+          number
+          state
+          repository {
+            nameWithOwner
+          }
+        }
+        ... on PullRequest {
+          title
+          number
+          state
+          repository {
+            nameWithOwner
+          }
+        }
+      }
+    }
+    ... on ClosedEvent {
+      ${timelineEventCommonFields}
+      closer {
+        __typename
+        ... on Commit {
+          abbreviatedOid
+        }
+      }
+    }
+    ... on ReopenedEvent {
+      ${timelineEventCommonFields}
+    }
+    ... on SubscribedEvent {
+      ${timelineEventCommonFields}
+    }
+    ... on UnsubscribedEvent {
+      ${timelineEventCommonFields}
+    }
+    ... on ReferencedEvent {
+      ${timelineEventCommonFields}
+      commitRepository {
+        nameWithOwner
+      }
+      commit {
+        abbreviatedOid
+      }
+    }
+    ... on AssignedEvent {
+      ${timelineEventCommonFields}
+      assignee: user {
+        login
+      }
+    }
+    ... on UnassignedEvent {
+      ${timelineEventCommonFields}
+      assignee: user {
+        login
+      }
+    }
+    ... on LabeledEvent {
+      ${timelineEventCommonFields}
+      label {
+        name
+        color
+      }
+    }
+    ... on UnlabeledEvent {
+      ${timelineEventCommonFields}
+      label {
+        name
+        color
+      }
+    }
+    ... on MilestonedEvent {
+      ${timelineEventCommonFields}
+      milestoneTitle
+    }
+    ... on DemilestonedEvent {
+      ${timelineEventCommonFields}
+      milestoneTitle
+    }
+    ... on RenamedTitleEvent {
+      ${timelineEventCommonFields}
+      previousTitle
+      currentTitle
+      subject {
+        __typename
+      }
+    }
+    ... on LockedEvent {
+      ${timelineEventCommonFields}
+      lockReason
+    }
+    ... on UnlockedEvent {
+      ${timelineEventCommonFields}
+    }
+  }
+}
+`;
+
 export const issueQuery = `
 query ($owner: String!, $name: String!, $number: Int!) {
   repository(owner: $owner, name: $name) {
@@ -75,130 +202,7 @@ query ($owner: String!, $name: String!, $number: Int!) {
           hasNextPage
           hasPreviousPage
         }
-        edges {
-          node {
-            __typename
-            ... on IssueComment {
-              id: databaseId
-              createdAt
-              viewerCanUpdate
-              viewerCanDelete
-              viewerDidAuthor
-              authorAssociation
-              author {
-                login
-                avatarUrl
-              }
-              body
-              bodyHTML
-              reactionGroups {
-                content
-                users {
-                  totalCount
-                }
-              }
-            }
-            ... on CrossReferencedEvent {
-              ${timelineEventCommonFields}
-              isCrossRepository
-              source {
-                __typename
-                ... on Issue {
-                  title
-                  number
-                  state
-                  repository {
-                    nameWithOwner
-                  }
-                }
-                ... on PullRequest {
-                  title
-                  number
-                  state
-                  repository {
-                    nameWithOwner
-                  }
-                }
-              }
-            }
-            ... on ClosedEvent {
-              ${timelineEventCommonFields}
-              closer {
-                __typename
-                ... on Commit {
-                  abbreviatedOid
-                }
-              }
-            }
-            ... on ReopenedEvent {
-              ${timelineEventCommonFields}
-            }
-            ... on SubscribedEvent {
-              ${timelineEventCommonFields}
-            }
-            ... on UnsubscribedEvent {
-              ${timelineEventCommonFields}
-            }
-            ... on ReferencedEvent {
-              ${timelineEventCommonFields}
-              commitRepository {
-                nameWithOwner
-              }
-              commit {
-                abbreviatedOid
-              }
-            }
-            ... on AssignedEvent {
-              ${timelineEventCommonFields}
-              assignee: user {
-                login
-              }
-            }
-            ... on UnassignedEvent {
-              ${timelineEventCommonFields}
-              assignee: user {
-                login
-              }
-            }
-            ... on LabeledEvent {
-              ${timelineEventCommonFields}
-              label {
-                name
-                color
-              }
-            }
-            ... on UnlabeledEvent {
-              ${timelineEventCommonFields}
-              label {
-                name
-                color
-              }
-            }
-            ... on MilestonedEvent {
-              ${timelineEventCommonFields}
-              milestoneTitle
-            }
-            ... on DemilestonedEvent {
-              ${timelineEventCommonFields}
-              milestoneTitle
-            }
-            ... on RenamedTitleEvent {
-              ${timelineEventCommonFields}
-              previousTitle
-              currentTitle
-              subject {
-                __typename
-              }
-            }
-            ... on LockedEvent {
-              ${timelineEventCommonFields}
-              lockReason
-            }
-            ... on UnlockedEvent {
-              ${timelineEventCommonFields}
-            }
-          }
-        }
+        ${issueTimelineEdges}
       }
     }
   }
