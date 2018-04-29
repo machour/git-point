@@ -62,6 +62,9 @@ export const issueSchema = new schema.Entity(
       },
       authorAssociation: issue.author_association,
       webUrl: issue.html_url,
+      comments: {
+        totalCount: issue.comments,
+      },
     }),
   }
 );
