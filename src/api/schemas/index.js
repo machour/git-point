@@ -22,4 +22,5 @@ export default {
   GQL_REPO_WITH_ISSUE: gqlRepoWithIssueSchema,
   ISSUE_COMMENT: issueCommentSchema,
   ISSUE: issueSchema,
+  ISSUE_ARRAY: [issueSchema],
 };

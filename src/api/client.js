@@ -521,6 +521,17 @@ export class Client {
         paginationArgs: [q],
         normalizrKey: 'items',
       }),
+    issues: (q: string, params: SpecialParameters = {}) =>
+      this.list({
+        endpoint: `search/issues?q=${q}`,
+        params,
+        schema: Schemas.ISSUE_ARRAY,
+        paginationArgs: [q],
+        normalizrKey: 'items',
+        fetchParameters: {
+          headers: { Accept: this.Accept.FULL },
+        },
+      }),
   };
   repos = {
     getContributors: (repoId: string, params: SpecialParameters = {}) =>

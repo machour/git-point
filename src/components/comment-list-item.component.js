@@ -37,6 +37,7 @@ const Avatar = styled.Image`
 
 const TitleSubtitleContainer = styled.View`
   justify-content: center;
+  flex-direction: column;
   flex: 1;
   margin-left: 10;
 `;
@@ -49,15 +50,20 @@ const DateContainer = styled.View`
 
 const Author = styled.Text`
   margin-left: 5;
+  margin-right: 10;
 `;
 
 const AuthorAssociation = styled.Text`
-  background-color: ${colors.greyLight};
-  border: 1px solid ${colors.greyDark};
-  border-radius: 5;
+  background-color: ${colors.greyVeryLight};
+  color: ${colors.greyDark};
+  ${fonts.fontPrimaryLight};
+  padding-left: 5;
+  padding-right: 5;
+  min-width: 50;
+  text-align: center;
+  overflow: hidden;
+  margin: 2px;
   font-size: ${normalize(10)};
-  margin: 3px;
-  padding: 3px;
 `;
 
 const LinkDescription = styled.Text`
@@ -179,9 +185,10 @@ class CommentListItemComponent extends Component {
                   )
                 }
               >
-                <Author>{comment.author.login}</Author>
+                <Author>{comment.author.login}</Author>{' '}
                 <AuthorAssociation>
-                  {comment.authorAssociation.toLowerCase()}
+                  {' '}
+                  {comment.authorAssociation.toLowerCase()}{' '}
                 </AuthorAssociation>
               </LinkDescription>
             </TitleSubtitleContainer>

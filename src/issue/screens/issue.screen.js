@@ -20,12 +20,7 @@ import {
   IssueEventListItem,
 } from 'components';
 import { RestClient } from 'api';
-import {
-  t,
-  formatEventsToRender,
-  openURLInView,
-  getRepoIdFromUrl,
-} from 'utils';
+import { t, formatEventsToRender, openURLInView } from 'utils';
 import { colors } from 'config';
 
 const getRepoAndIssueFromUrl = url => {
@@ -203,7 +198,7 @@ class Issue extends Component {
     const { navigation } = this.props;
 
     navigation.navigate('Repository', {
-      repoId: getRepoIdFromUrl(url),
+      repoId,
     });
   };
 
