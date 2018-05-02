@@ -144,6 +144,22 @@ class CommentListItemComponent extends Component {
     return actions;
   };
 
+  renderAuthorAssociation(association) {
+    const { locale } = this.props;
+    const labels = {
+      COLLABORATOR: t('Collaborator', locale),
+      CONTRIBUTOR: t('Contriburor', locale),
+      FIRST_TIMER: t('First timer', locale),
+      FIRST_TIME_CONTRIBUTOR: t('First time contributor', locale),
+      MEMBER: t('Member', locale),
+      OWNER: t('Owner', locale),
+    };
+
+    return labels[association] ? (
+      <AuthorAssociation> {labels[association]} </AuthorAssociation>
+    ) : null;
+  }
+
   render() {
     const { comment, locale, navigation, onLinkPress } = this.props;
 
@@ -186,10 +202,7 @@ class CommentListItemComponent extends Component {
                 }
               >
                 <Author>{comment.author.login}</Author>{' '}
-                <AuthorAssociation>
-                  {' '}
-                  {comment.authorAssociation.toLowerCase()}{' '}
-                </AuthorAssociation>
+                {this.renderAuthorAssociation(comment.authorAssociation)}
               </LinkDescription>
             </TitleSubtitleContainer>
           )}
