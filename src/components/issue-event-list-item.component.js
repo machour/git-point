@@ -8,19 +8,16 @@ import styled from 'styled-components';
 import { relativeTimeToNow, t } from 'utils';
 
 const marginLeftForIconName = name => {
-  switch (name) {
-    case 'git-branch':
-    case 'git-merge':
-    case 'primitive-dot':
-      return 8;
-    case 'bookmark':
-      return 6;
-    case 'person':
-    case 'lock':
-      return 4;
-    default:
-      return 2;
-  }
+  const margins = {
+    'git-branch': 8,
+    'git-merge': 8,
+    'primitive-dot': 8,
+    bookmark: 6,
+    person: 4,
+    lock: 4,
+  };
+
+  return margins[name] ? margins[name] : 2;
 };
 
 const Container = styled.View`
