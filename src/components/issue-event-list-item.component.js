@@ -102,9 +102,13 @@ export class IssueEventListItem extends Component {
     });
   };
 
+  getActor(event) {
+    return <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+  }
+
   handleReviewRequested(event, repository) {
     // FIXME: repository should not exist
-    const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+    const actor = this.getActor(event);
     const reviewer =
       event.requestedReviewer.__typename === 'User' ? (
         <ActorLink actor={event.requestedReviewer} onPress={this.onPressUser} />
@@ -131,15 +135,15 @@ export class IssueEventListItem extends Component {
   }
 
   handleLabeledEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="tag"
         text={
           <EventTextContainer>
             {t('{actor} added {label}', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
               label: <InlineLabel label={event.label} />,
             })}
           </EventTextContainer>
@@ -150,15 +154,15 @@ export class IssueEventListItem extends Component {
   }
 
   handleUnlabeledEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="tag"
         text={
           <EventTextContainer>
             {t('{actor} removed {label}', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
               label: <InlineLabel label={event.label} />,
             })}
           </EventTextContainer>
@@ -169,48 +173,54 @@ export class IssueEventListItem extends Component {
   }
 
   handleAssignedEvent(event) {
+    const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+    const text =
+      event.actor.login === event.assignee.login
+        ? t('{actor} self-assigned this', this.props.locale, {
+            actor,
+          })
+        : t('{actor} assigned {assignee}', this.props.locale, {
+            actor,
+            assignee: (
+              <ActorLink actor={event.assignee} onPress={this.onPressUser} />
+            ),
+          });
+
     return (
       <Event
         iconName="person"
-        text={
-          <Text>
-            {t('{actor} assigned {assignee}', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
-              assignee: (
-                <ActorLink actor={event.assignee} onPress={this.onPressUser} />
-              ),
-            })}
-          </Text>
-        }
+        text={<Text>{text}</Text>}
         createdAt={event.createdAt}
       />
     );
   }
 
   handleUnassignedEvent(event) {
+    const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+    const text =
+      event.actor.login === event.assignee.login
+        ? t('{actor} removed their assignement from this', this.props.locale, {
+            actor,
+          })
+        : t('{actor} unassigned {assignee}', this.props.locale, {
+            actor,
+            assignee: (
+              <ActorLink actor={event.assignee} onPress={this.onPressUser} />
+            ),
+          });
+
     return (
       <Event
         iconName="person"
-        text={
-          <Text>
-            {t('{actor} unassigned {assignee}', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
-              assignee: (
-                <ActorLink actor={event.assignee} onPress={this.onPressUser} />
-              ),
-            })}
-          </Text>
-        }
+        text={<Text>{text}</Text>}
         createdAt={event.createdAt}
       />
     );
   }
 
   handleClosedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="circle-slash"
@@ -219,9 +229,7 @@ export class IssueEventListItem extends Component {
         text={
           <Text>
             {t('{actor} closed this', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
             })}
           </Text>
         }
@@ -231,6 +239,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleReopenedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="primitive-dot"
@@ -239,9 +249,7 @@ export class IssueEventListItem extends Component {
         text={
           <Text>
             {t('{actor} reopened this', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
             })}
           </Text>
         }
@@ -251,6 +259,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleRenamedTitleEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="pencil"
@@ -260,9 +270,7 @@ export class IssueEventListItem extends Component {
               '{actor} changed the title from {previousTitle} to {currentTitle}',
               this.props.locale,
               {
-                actor: (
-                  <ActorLink actor={event.actor} onPress={this.onPressUser} />
-                ),
+                actor,
                 previousTitle: <BoldText>{event.previousTitle}</BoldText>,
                 currentTitle: <BoldText>{event.currentTitle}</BoldText>,
               }
@@ -275,6 +283,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleDemilestonedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="milestone"
@@ -284,9 +294,7 @@ export class IssueEventListItem extends Component {
               '{actor} removed this from the {milestone} milestone',
               this.props.locale,
               {
-                actor: (
-                  <ActorLink actor={event.actor} onPress={this.onPressUser} />
-                ),
+                actor,
                 milestone: <BoldText>{event.milestoneTitle}</BoldText>,
               }
             )}
@@ -298,6 +306,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleMilestonedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="milestone"
@@ -307,9 +317,7 @@ export class IssueEventListItem extends Component {
               '{actor} added this to the {milestone} milestone',
               this.props.locale,
               {
-                actor: (
-                  <ActorLink actor={event.actor} onPress={this.onPressUser} />
-                ),
+                actor,
                 milestone: <BoldText>{event.milestoneTitle}</BoldText>,
               }
             )}
@@ -321,6 +329,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleUnlockedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="key"
@@ -329,9 +339,7 @@ export class IssueEventListItem extends Component {
         text={
           <Text>
             {t('{actor} unlocked this conversation', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
             })}
           </Text>
         }
@@ -341,7 +349,7 @@ export class IssueEventListItem extends Component {
   }
 
   handleLockedEvent(event) {
-    const actor = <ActorLink actor={event.actor} onPress={this.onPressUser} />;
+    const actor = this.getActor(event);
 
     if (event.lockReason) {
       return (
@@ -384,6 +392,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleMergedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="git-merge"
@@ -392,9 +402,7 @@ export class IssueEventListItem extends Component {
         text={
           <Text>
             {t('{actor} merged {commit}', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
               commit: <BoldText>{event.commit_id.slice(0, 7)}</BoldText>,
             })}
           </Text>
@@ -405,6 +413,8 @@ export class IssueEventListItem extends Component {
   }
 
   handleHeadRefDeletedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="git-branch"
@@ -413,9 +423,7 @@ export class IssueEventListItem extends Component {
         text={
           <Text>
             {t('{actor} deleted this branch', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
             })}
           </Text>
         }
@@ -425,15 +433,15 @@ export class IssueEventListItem extends Component {
   }
 
   handleHeadRefRestoredEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="git-branch"
         text={
           <Text>
             {t('{actor} restored this branch', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
             })}
           </Text>
         }
@@ -443,18 +451,18 @@ export class IssueEventListItem extends Component {
   }
 
   handleCrossReferencedEvent(event) {
+    const actor = this.getActor(event);
+
     return (
       <Event
         iconName="link"
         text={
           <Text>
             {t('{actor} referenced this from {source}', this.props.locale, {
-              actor: (
-                <ActorLink actor={event.actor} onPress={this.onPressUser} />
-              ),
+              actor,
               source: (
                 <BoldText onPress={() => this.onPressIssue(event.source)}>
-                  {'#' + event.source.number}
+                  {`#${event.source.number}`}
                 </BoldText>
               ),
             })}
@@ -478,7 +486,8 @@ export class IssueEventListItem extends Component {
       return this[handler](event, repository);
     }
 
-    console.log('Unhandled event type: ' + event.__typename);
+    /* eslint-disable no-console */
+    console.log(`Unhandled event type: ${event.__typename}`);
 
     return null;
   }
