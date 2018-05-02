@@ -585,14 +585,6 @@ class ActorLink extends Component {
   render() {
     const { actor, onPress } = this.props;
 
-    return (
-      <BoldText
-        onPress={() => {
-          onPress(actor);
-        }}
-      >
-        {actor.login}
-      </BoldText>
-    );
+    return <BoldText onPress={() => onPress(actor)}>{actor.login}</BoldText>;
   }
 }
